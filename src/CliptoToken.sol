@@ -12,9 +12,7 @@ contract CliptoToken is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor(string memory _creatorName) ERC721(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO") {
-        transferOwnership(tx.origin);
-    }
+    constructor(string memory _creatorName) ERC721(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO") {}
 
     // See https://docs.opensea.io/docs/contract-level-metadata
     function contractURI() public pure returns (string memory) {
