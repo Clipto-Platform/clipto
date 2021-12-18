@@ -14,8 +14,6 @@ contract CliptoExchange {
         string name;
         /// @dev Minimum cost of a video
         uint256 cost;
-        /// @dev Array of requests
-        Request[] requests;
     }
 
     /// @dev Struct representing a video request
@@ -30,8 +28,11 @@ contract CliptoExchange {
                                 CREATOR STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Maps creator address to creator struct
+    /// @dev Maps creator address to creator struct.
     mapping(address => Creator) public creators;
+
+    /// @dev Maps creator address to an array of requests.
+    mapping(address => Request[]) public requests;
 
     /// @notice Emitted when a new creator is regsitered.
     /// @param creator Address of the creator.
@@ -41,7 +42,7 @@ contract CliptoExchange {
     /// @notice Register a new creator
     function registerCreator(string memory name, uint256 cost) external {
         // Set a new creator.
-        creators[msg.sender] = Creator({name: name, cost: cost, requests: new Request[](0)});
+        creators[msg.sender] = Creator({name: name, cost: cost});
 
         // Emit event.
         emit CreatorRegistered(msg.sender, name, cost);
@@ -58,6 +59,6 @@ contract CliptoExchange {
     /// @dev The request's "amount" value is the callvalue
     function newRequest(address creator) external payable {
         // Add the request to the creator's requests array.
-        creators[creator].requests.push(Request({requester: msg.sender, amount: msg.value}));
+        requests[creator].push(Request({requester: msg.sender, amount: msg.value}));
     }
 }
