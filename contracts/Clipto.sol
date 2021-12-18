@@ -31,7 +31,7 @@ contract Clipto is ReentrancyGuard {
     mapping(uint256 => Agreement) public _agreement;
     uint256 public _agreementCount;
 
-    event SetCameo(address indexed seller, uint256 price, uint256 deliveryTime, string profileUri);
+    event SetCameo(address indexed seller, uint256 price, uint256 deliveryTime, string profileUri, address collection);
 
     event SetOpenSlots(address indexed seller, uint256 openSlots);
 
@@ -55,14 +55,15 @@ contract Clipto is ReentrancyGuard {
         string memory profileUri,
         string memory profileName
     ) external {
+        address collection = address(new CliptoNft(profileName));
         _cameo[msg.sender].seller = msg.sender;
         // _cameo[msg.sender].reputation = 0; this will be zero by default
         _cameo[msg.sender].price = price;
         _cameo[msg.sender].deliveryTime = deliveryTime;
         _cameo[msg.sender].profileUri = profileUri;
         _cameo[msg.sender].openSlots = 1;
-        _cameo[msg.sender].collection = address(new CliptoNft(profileName));
-        emit SetCameo(msg.sender, price, deliveryTime, profileUri);
+        _cameo[msg.sender].collection = collection;
+        emit SetCameo(msg.sender, price, deliveryTime, profileUri, collection);
     }
 
     // sets all the possible number of open slots
