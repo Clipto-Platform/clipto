@@ -60,6 +60,7 @@ contract CliptoExchange {
     /// @dev The request's "amount" value is the callvalue
     function newRequest(address creator) external payable {
         // Add the request to the creator's requests array.
+        require(msg.value >= creators[creator].cost, "Request amount is less than the minimum cost");
         requests[creator].push(Request({requester: msg.sender, amount: msg.value}));
     }
 }
