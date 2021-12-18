@@ -2,15 +2,17 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./CliptoNft.sol";
 
-contract CryptoCameo is ReentrancyGuard {
+contract Clipto is ReentrancyGuard {
     struct Cameo {
         address seller;
         int256 reputation; // can be positive or negative
         uint256 price; // in wei
         uint256 deliveryTime; // time diff in unix time
         string profileUri; // profile details for seller
-        uint16 openSlots; // number of open slots, this will decrease till 0 
+        uint16 openSlots; // number of open slots, this will decrease till 0
+        address collection;
     }
 
     struct Agreement {
@@ -29,19 +31,11 @@ contract CryptoCameo is ReentrancyGuard {
     mapping(uint256 => Agreement) public _agreement;
     uint256 public _agreementCount;
 
-    event SetCameo (
-        address indexed seller,
-        uint256 price,
-        uint256 deliveryTime,
-        string profileUri
-    );
+    event SetCameo(address indexed seller, uint256 price, uint256 deliveryTime, string profileUri);
 
-    event SetOpenSlots (
-        address indexed seller,
-        uint256 openSlots
-    );
+    event SetOpenSlots(address indexed seller, uint256 openSlots);
 
-    event NewAgreement (
+    event NewAgreement(
         uint256 id,
         address indexed seller,
         address indexed buyer,
@@ -50,30 +44,24 @@ contract CryptoCameo is ReentrancyGuard {
         string requestUri
     );
 
-    event Refund (uint256 id);
-    event Withdraw (uint256 id);
-    event Review (
-        uint256 id, 
-        address indexed seller,
-        address indexed buyer,
-        bool goodReview
-    );
+    event Refund(uint256 id);
+    event Withdraw(uint256 id);
+    event Review(uint256 id, address indexed seller, address indexed buyer, bool goodReview);
 
     // use this for initialization and modification of cameo
     function setCameo(
-        uint256 price, 
-        uint256 deliveryTime, 
-        string memory profileUri
-    ) 
-        external 
-    {
-        _cameo[msg.sender].seller = msg.sender;  
+        uint256 price,
+        uint256 deliveryTime,
+        string memory profileUri,
+        string memory profileName
+    ) external {
+        _cameo[msg.sender].seller = msg.sender;
         // _cameo[msg.sender].reputation = 0; this will be zero by default
         _cameo[msg.sender].price = price;
         _cameo[msg.sender].deliveryTime = deliveryTime;
         _cameo[msg.sender].profileUri = profileUri;
-        // _cameo[msg.sender].openSlots = 0; this will be zero by default
-        
+        _cameo[msg.sender].openSlots = 1;
+        _cameo[msg.sender].collection = address(new CliptoNft(profileName));
         emit SetCameo(msg.sender, price, deliveryTime, profileUri);
     }
 
@@ -87,42 +75,28 @@ contract CryptoCameo is ReentrancyGuard {
     }
 
     function buy(
-        address seller, 
-        uint256 deadline, 
+        address seller,
+        uint256 deadline,
         string memory requestUri
-    ) 
-        external 
-        payable
-        returns (uint256) 
-    {
+    ) external payable returns (uint256) {
         require(msg.sender != seller, "Buyer cannot be seller");
         require(deadline > block.timestamp + _cameo[seller].deliveryTime, "Please set a reasonable deadline");
         require(msg.value >= _cameo[seller].price, "Not enough funds");
         require(_cameo[seller].openSlots > 0, "No more open slots");
 
-        _agreementCount++;
         _agreement[_agreementCount].seller = seller;
         _agreement[_agreementCount].buyer = msg.sender;
         _agreement[_agreementCount].price = _cameo[seller].price;
         _agreement[_agreementCount].deadline = deadline;
         _agreement[_agreementCount].requestUri = requestUri;
+        _agreementCount++;
 
         // decrement openslots
         _cameo[seller].openSlots--;
 
-        emit NewAgreement (
-            _agreementCount,
-            seller,
-            msg.sender,
-            _cameo[seller].price,
-            deadline,
-            requestUri
-        );
-        emit SetOpenSlots (
-            seller,
-            _cameo[seller].openSlots
-        );
-        
+        emit NewAgreement(_agreementCount, seller, msg.sender, _cameo[seller].price, deadline, requestUri);
+        emit SetOpenSlots(seller, _cameo[seller].openSlots);
+
         return _agreementCount;
     }
 
@@ -139,7 +113,7 @@ contract CryptoCameo is ReentrancyGuard {
         _agreement[agreementId].review = true;
         _cameo[_agreement[agreementId].seller].reputation--;
 
-        (bool sent,) = msg.sender.call{value: _agreement[agreementId].price}("");
+        (bool sent, ) = msg.sender.call{value: _agreement[agreementId].price}("");
         require(sent, "Refund failed");
 
         emit Refund(agreementId);
@@ -155,7 +129,7 @@ contract CryptoCameo is ReentrancyGuard {
         _agreement[agreementId].withdrawn = true;
         _agreement[agreementId].submissionUri = submissionUri;
 
-        (bool sent,) = msg.sender.call{value: _agreement[agreementId].price}("");
+        (bool sent, ) = msg.sender.call{value: _agreement[agreementId].price}("");
         require(sent, "Withdraw failed");
 
         emit Withdraw(agreementId);
@@ -174,11 +148,6 @@ contract CryptoCameo is ReentrancyGuard {
             _cameo[_agreement[agreementId].seller].reputation--;
         }
 
-        emit Review (
-            agreementId, 
-            _agreement[agreementId].seller,
-            _agreement[agreementId].buyer,
-            goodReview
-        );
+        emit Review(agreementId, _agreement[agreementId].seller, _agreement[agreementId].buyer, goodReview);
     }
 }

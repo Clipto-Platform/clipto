@@ -5,18 +5,21 @@ module.exports = {
     mocha: true,
     node: true,
   },
-  extends: [
-    "standard",
-    "plugin:prettier/recommended",
-    "plugin:node/recommended",
-  ],
+  plugins: ["@typescript-eslint"],
+  extends: ["standard", "plugin:prettier/recommended", "plugin:node/recommended"],
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 12,
   },
-  overrides: [
-    {
-      files: ["hardhat.config.js"],
-      globals: { task: true },
-    },
-  ],
+  rules: {
+    "node/no-unsupported-features/es-syntax": ["error", { ignores: ["modules"] }],
+    "node/no-missing-import": [
+      "error",
+      {
+        allowModules: [],
+        resolvePaths: ["./typechain"],
+        tryExtensions: [".js", ".ts", ".json", ".node"],
+      },
+    ],
+  },
 };
