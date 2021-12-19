@@ -20,7 +20,7 @@ contract CliptoToken is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
     }
 
     function _baseURI() internal pure override returns (string memory) {
-        return "ipfs://";
+        return "https://arweave.net/";
     }
 
     function safeMint(address to, string memory _tokenURI) public onlyOwner {

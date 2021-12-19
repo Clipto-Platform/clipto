@@ -20,6 +20,8 @@ contract CliptoExchange is ReentrancyGuard {
         uint256 cost;
         /// @dev address of creator's associated nft collection
         address token;
+        /// @dev arweave hash representing the creator's profile as a json file
+        string profileUrl;
     }
 
     /// @dev Struct representing a video request
@@ -48,9 +50,9 @@ contract CliptoExchange is ReentrancyGuard {
     event CreatorRegistered(address indexed creator, string indexed name, uint256 cost);
 
     /// @notice Register a new creator
-    function registerCreator(string memory name, uint256 cost) external {
+    function registerCreator(string memory name, uint256 cost, string memory profileUrl) external {
         // Set a new creator.
-        creators[msg.sender] = Creator({name: name, cost: cost, token: address(0)});
+        creators[msg.sender] = Creator({name: name, cost: cost, token: address(0), profileUrl: profileUrl});
 
         // Emit event.
         emit CreatorRegistered(msg.sender, name, cost);
