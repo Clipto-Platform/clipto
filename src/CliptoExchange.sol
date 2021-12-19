@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: None
 pragma solidity 0.8.10;
 
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {CliptoToken} from "./CliptoToken.sol";
+
 /// @title Clipto Exchange
 /// @author Clipto
 /// @dev Exchange contract for Clipto Videos
-contract CliptoExchange {
+contract CliptoExchange is ReentrancyGuard {
     /*///////////////////////////////////////////////////////////////
                                 STRUCTS
     //////////////////////////////////////////////////////////////*/
@@ -15,6 +18,10 @@ contract CliptoExchange {
         string name;
         /// @dev Minimum cost of a video
         uint256 cost;
+        /// @dev address of creator's associated nft collection
+        address token;
+        /// @dev arweave hash representing the creator's profile as a json file
+        string profileUrl;
     }
 
     /// @dev Struct representing a video request
@@ -23,6 +30,8 @@ contract CliptoExchange {
         address requester;
         // Amount of ETH set for the request
         uint256 amount;
+        // Whether the request is delivered
+        bool delivered;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -41,9 +50,9 @@ contract CliptoExchange {
     event CreatorRegistered(address indexed creator, string indexed name, uint256 cost);
 
     /// @notice Register a new creator
-    function registerCreator(string memory name, uint256 cost) external {
+    function registerCreator(string memory name, uint256 cost, string memory profileUrl) external {
         // Set a new creator.
-        creators[msg.sender] = Creator({name: name, cost: cost});
+        creators[msg.sender] = Creator({name: name, cost: cost, token: address(0), profileUrl: profileUrl});
 
         // Emit event.
         emit CreatorRegistered(msg.sender, name, cost);
@@ -61,6 +70,18 @@ contract CliptoExchange {
     function newRequest(address creator) external payable {
         // Add the request to the creator's requests array.
         require(msg.value >= creators[creator].cost, "Request amount is less than the minimum cost");
-        requests[creator].push(Request({requester: msg.sender, amount: msg.value}));
+        requests[creator].push(Request({requester: msg.sender, amount: msg.value, delivered: false}));
+    }
+
+    function deliverRequest(uint256 index, string memory _tokenURI) external nonReentrant {
+        require(requests[msg.sender][index].delivered == false, "Request already delivered");
+
+        if (creators[msg.sender].token == address(0)) {
+            creators[msg.sender].token = address(new CliptoToken(creators[msg.sender].name));
+        }
+        CliptoToken(creators[msg.sender].token).safeMint(requests[msg.sender][index].requester, _tokenURI);
+        requests[msg.sender][index].delivered = true;
+        (bool sent, ) = msg.sender.call{value: requests[msg.sender][index].amount}("");
+        require(sent, "Delivery failed");
     }
 }
