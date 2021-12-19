@@ -28,13 +28,13 @@ contract CliptoExchangeTest is DSTestPlus {
         testCreatorRegistration();
 
         // Create a new request (the creator address is address(this))
-        exchange.newRequest(address(this));
+        exchange.newRequest{value: 1e18}(address(this));
 
         // Check that the request was created
         (address requester, uint256 value) = exchange.requests(address(this), 0);
 
         // Ensure the data returned is correct.
         assertEq(requester, address(this));
-        assertEq(value, 0);
+        assertEq(value, 1e18);
     }
 }
