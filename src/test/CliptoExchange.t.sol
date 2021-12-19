@@ -7,7 +7,7 @@ import {DSTestPlus} from "lib/solmate/src/test/utils/DSTestPlus.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
-    CliptoExchange exchange;
+    CliptoExchange internal exchange;
 
     function setUp() external {
         exchange = new CliptoExchange();
@@ -47,8 +47,8 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
         uint256 balanceBefore = address(this).balance;
         exchange.deliverRequest(0, "http://website.com");
-        (,, bool delivered) = exchange.requests(address(this), 0);
-        (,, address token) = exchange.creators(address(this));
+        (, , bool delivered) = exchange.requests(address(this), 0);
+        (, , address token) = exchange.creators(address(this));
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
