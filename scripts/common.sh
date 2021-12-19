@@ -87,6 +87,22 @@ deploy() {
 	echo "$ADDRESS"
 }
 
+abi() {
+	NAME=$1
+	ARGS=${@:2}
+
+	# find file path
+	CONTRACT_PATH=$(find . -name $NAME.sol)
+	CONTRACT_PATH=${CONTRACT_PATH:2}
+
+	# select the filename and the contract in it
+	PATTERN=".contracts[\"$CONTRACT_PATH\"].$NAME"
+
+	# get the constructor's signature
+	ABI=$(jq -r "$PATTERN.abi" out/dapp.sol.json)
+	echo "$ABI";
+}
+
 # Call as `saveContract ContractName 0xYourAddress` to store the contract name
 # & address to the addresses json file
 saveContract() {
