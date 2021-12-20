@@ -19,10 +19,6 @@ contract CliptoToken is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
         return "https://clipto.io/contract-metadata.json";
     }
 
-    function _baseURI() internal pure override returns (string memory) {
-        return "https://arweave.net/";
-    }
-
     function safeMint(address to, string memory _tokenURI) public onlyOwner {
         _safeMint(to, _tokenIdCounter.current());
         _setTokenURI(_tokenIdCounter.current(), _tokenURI);

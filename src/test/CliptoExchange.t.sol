@@ -15,16 +15,21 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function testCreatorRegistration() public {
         // Register creator.
-        exchange.registerCreator("Gabriel Haines", 1e18, "https://arweave.net/0xrandomhex");
+        address tokenAddress = exchange.registerCreator(
+            "Gabriel", 
+            "https://arweave.net/0xprofileurl", 
+            1e18, 
+            1e18
+        );
 
         // Retrieve creator information.
-        (string memory name, uint256 cost, address token, string memory profileUrl) = exchange.creators(address(this));
+        (string memory profileUrl, uint256 cost, address token, uint minTimeToDeliver) = exchange.creators(address(this));
 
         // Ensure the data returned is correct.
-        assertEq(name, "Gabriel Haines");
+        assertEq(profileUrl, "https://arweave.net/0xprofileurl");
         assertEq(cost, 1e18);
-        assertEq(token, address(0));
-        assertEq(profileUrl, "https://arweave.net/0xrandomhex");
+        assertEq(token, tokenAddress);
+        assertEq(minTimeToDeliver, 1e18);
     }
 
     function testRequestCreation() public {
@@ -32,15 +37,17 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         testCreatorRegistration();
 
         // Create a new request (the creator address is address(this))
-        exchange.newRequest{value: 1e18}(address(this));
+        exchange.newRequest{value: 1e18}(address(this), 2e18);
 
         // Check that the request was created
-        (address requester, uint256 value, bool delivered) = exchange.requests(address(this), 0);
+        (address requester, uint256 value, bool delivered, uint256 deadline, bool refunded) = exchange.requests(address(this), 0);
 
         // Ensure the data returned is correct.
         assertEq(requester, address(this));
         assertEq(value, 1e18);
         assertFalse(delivered);
+        assertEq(deadline, 2e18);
+        assertFalse(refunded);
     }
 
     function testRequestDelivery() public {
@@ -48,12 +55,10 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
         uint256 balanceBefore = address(this).balance;
         exchange.deliverRequest(0, "http://website.com");
-        (, , bool delivered) = exchange.requests(address(this), 0);
-        (, , address token, ) = exchange.creators(address(this));
+        (, , bool delivered, , ) = exchange.requests(address(this), 0);
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
-        assertEq(CliptoToken(token).name(), "Clipto - Gabriel Haines");
     }
 
     function onERC721Received(
