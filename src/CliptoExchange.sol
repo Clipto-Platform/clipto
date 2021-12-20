@@ -14,14 +14,12 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @dev Struct represent a creator account
     struct Creator {
-        /// @dev Creator's name
-        string name;
+        /// @dev Creator's profile url on arweave
+        string profileUrl;
         /// @dev Minimum cost of a video
         uint256 cost;
         /// @dev address of creator's associated nft collection
         address token;
-        /// @dev arweave hash representing the creator's profile as a json file
-        string profileUrl;
     }
 
     /// @dev Struct representing a video request
@@ -46,16 +44,16 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Emitted when a new creator is regsitered.
     /// @param creator Address of the creator.
-    /// @param name Creator's name.
-    event CreatorRegistered(address indexed creator, string indexed name, uint256 cost);
+    /// @param profileUrl Creator's profile on arweave.
+    event CreatorRegistered(address indexed creator, string indexed profileUrl, uint256 cost);
 
     /// @notice Register a new creator
-    function registerCreator(string memory name, uint256 cost, string memory profileUrl) external {
+    function registerCreator(string memory profileUrl, uint256 cost) external {
         // Set a new creator.
-        creators[msg.sender] = Creator({name: name, cost: cost, token: address(0), profileUrl: profileUrl});
+        creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: address(0)});
 
         // Emit event.
-        emit CreatorRegistered(msg.sender, name, cost);
+        emit CreatorRegistered(msg.sender, profileUrl, cost);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -73,11 +71,15 @@ contract CliptoExchange is ReentrancyGuard {
         requests[creator].push(Request({requester: msg.sender, amount: msg.value, delivered: false}));
     }
 
-    function deliverRequest(uint256 index, string memory _tokenURI) external nonReentrant {
+    function deliverRequest(
+        string memory creatorName,
+        uint256 index,
+        string memory _tokenURI
+    ) external nonReentrant {
         require(requests[msg.sender][index].delivered == false, "Request already delivered");
 
         if (creators[msg.sender].token == address(0)) {
-            creators[msg.sender].token = address(new CliptoToken(creators[msg.sender].name));
+            creators[msg.sender].token = address(new CliptoToken(creatorName));
         }
         CliptoToken(creators[msg.sender].token).safeMint(requests[msg.sender][index].requester, _tokenURI);
         requests[msg.sender][index].delivered = true;
