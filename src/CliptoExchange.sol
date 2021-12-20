@@ -48,7 +48,7 @@ contract CliptoExchange is ReentrancyGuard {
     event CreatorRegistered(address indexed creator, string indexed profileUrl, uint256 cost);
 
     /// @notice Register a new creator
-    function registerCreator( string memory profileUrl, uint256 cost) external {
+    function registerCreator(string memory profileUrl, uint256 cost) external {
         // Set a new creator.
         creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: address(0)});
 
@@ -71,7 +71,11 @@ contract CliptoExchange is ReentrancyGuard {
         requests[creator].push(Request({requester: msg.sender, amount: msg.value, delivered: false}));
     }
 
-    function deliverRequest(string memory creatorName, uint256 index, string memory _tokenURI) external nonReentrant {
+    function deliverRequest(
+        string memory creatorName,
+        uint256 index,
+        string memory _tokenURI
+    ) external nonReentrant {
         require(requests[msg.sender][index].delivered == false, "Request already delivered");
 
         if (creators[msg.sender].token == address(0)) {

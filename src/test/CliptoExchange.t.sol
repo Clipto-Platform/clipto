@@ -48,7 +48,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         uint256 balanceBefore = address(this).balance;
         exchange.deliverRequest("Gabriel Haines", 0, "http://website.com");
         (, , bool delivered) = exchange.requests(address(this), 0);
-        (, ,address token ) = exchange.creators(address(this));
+        (, , address token) = exchange.creators(address(this));
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
