@@ -15,16 +15,15 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function testCreatorRegistration() public {
         // Register creator.
-        exchange.registerCreator("Gabriel Haines", 1e18, "https://arweave.net/0xrandomhex");
+        exchange.registerCreator("https://arweave.net/0xprofileurl", 1e18);
 
         // Retrieve creator information.
-        (string memory name, uint256 cost, address token, string memory profileUrl) = exchange.creators(address(this));
+        (string memory profileUrl, uint256 cost, address token) = exchange.creators(address(this));
 
         // Ensure the data returned is correct.
-        assertEq(name, "Gabriel Haines");
+        assertEq(profileUrl, "https://arweave.net/0xprofileurl");
         assertEq(cost, 1e18);
         assertEq(token, address(0));
-        assertEq(profileUrl, "https://arweave.net/0xrandomhex");
     }
 
     function testRequestCreation() public {
@@ -47,9 +46,9 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         testRequestCreation();
 
         uint256 balanceBefore = address(this).balance;
-        exchange.deliverRequest(0, "http://website.com");
+        exchange.deliverRequest("Gabriel Haines", 0, "http://website.com");
         (, , bool delivered) = exchange.requests(address(this), 0);
-        (, , address token, ) = exchange.creators(address(this));
+        (, ,address token ) = exchange.creators(address(this));
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
