@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: None
 pragma solidity 0.8.10;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 import {CliptoToken} from "./CliptoToken.sol";
 
 /// @title Clipto Exchange
