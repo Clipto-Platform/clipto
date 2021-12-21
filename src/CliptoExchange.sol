@@ -44,6 +44,8 @@ contract CliptoExchange {
         uint256 cost
     ) external returns (address) {
         require(creators[msg.sender].token == address(0), "Already registered");
+
+        // TODO: Do not deploy a new contract for each creator!
         address tokenAddress = address(new CliptoToken(creatorName));
         creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: tokenAddress});
 
