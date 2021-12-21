@@ -14,7 +14,7 @@ contract CliptoExchange {
     /// @dev Maps creator address to creator struct.
     mapping(address => Creator) public creators;
 
-    /// @dev Struct represent a creator account
+    /// @dev Struct representing a creator account
     struct Creator {
         /// @dev Creator's profile url on arweave
         string profileUrl;
