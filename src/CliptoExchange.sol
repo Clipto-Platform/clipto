@@ -77,8 +77,6 @@ contract CliptoExchange {
         uint256 amount;
         /// @dev Whether the request is delivered
         bool delivered;
-        /// @dev deadline for the request in unix time
-        uint256 deadline;
         /// @dev flag to indicate whether the request was refunded
         bool refunded;
     }
@@ -94,13 +92,11 @@ contract CliptoExchange {
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
-    function newRequest(address creator, uint256 deadline) external payable {
+    function newRequest(address creator) external payable {
         // Add the request to the creator's requests array.
         require(msg.value >= creators[creator].cost, "Insufficient value");
 
-        requests[creator].push(
-            Request({requester: msg.sender, amount: msg.value, delivered: false, deadline: deadline, refunded: false})
-        );
+        requests[creator].push(Request({requester: msg.sender, amount: msg.value, delivered: false, refunded: false}));
 
         emit NewRequest(creator, msg.sender, requests[creator].length, msg.value);
     }
