@@ -17,7 +17,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         // Register creator.
         address tokenAddress = exchange.registerCreator(
             "Gabriel", 
-            "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk", 
+            "ar://BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk", 
             1e18, 
             2 days
         );
@@ -26,7 +26,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         (string memory profileUrl, uint256 cost, address token, uint minTimeToDeliver) = exchange.creators(address(this));
 
         // Ensure the data returned is correct.
-        assertEq(profileUrl, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
+        assertEq(profileUrl, "ar://BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
         assertEq(cost, 1e18);
         assertEq(token, tokenAddress);
         assertEq(minTimeToDeliver, 2 days);
@@ -55,7 +55,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         testRequestCreation();
 
         uint256 balanceBefore = address(this).balance;
-        exchange.deliverRequest(0, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
+        exchange.deliverRequest(0, "ar://BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
         (, , bool delivered, , ) = exchange.requests(address(this), 0);
 
         assertTrue(delivered);
@@ -64,14 +64,14 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function modifyCreator() public {
         exchange.modifyCreator(
-            "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl", 
+            "ar://BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl", 
             2e18, 
             3 days
         );
 
         (string memory profileUrl, uint256 cost, address token, uint minTimeToDeliver) = exchange.creators(address(this));
         // Ensure the data returned is correct.
-        assertEq(profileUrl, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl");
+        assertEq(profileUrl, "ar://BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl");
         assertEq(cost, 2e18);
         assertEq(minTimeToDeliver, 3 days);
     }
