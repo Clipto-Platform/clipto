@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: None
 pragma solidity 0.8.10;
 
-import {ReentrancyGuard} from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 import {CliptoToken} from "./CliptoToken.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto
 /// @dev Exchange contract for Clipto Videos
-contract CliptoExchange is ReentrancyGuard {
+contract CliptoExchange {
     /*///////////////////////////////////////////////////////////////
                                 STRUCTS
     //////////////////////////////////////////////////////////////*/
@@ -63,17 +62,17 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Register a new creator
     function registerCreator(
-        string memory creatorName, 
-        string memory profileUrl, 
+        string memory creatorName,
+        string memory profileUrl,
         uint256 cost,
         uint256 minTimeToDeliver
     ) external returns (address) {
         require(creators[msg.sender].token == address(0), "Already registered");
         address tokenAddress = address(new CliptoToken(creatorName));
         creators[msg.sender] = Creator({
-            profileUrl: profileUrl, 
-            cost: cost, 
-            token: tokenAddress, 
+            profileUrl: profileUrl,
+            cost: cost,
+            token: tokenAddress,
             minTimeToDeliver: minTimeToDeliver
         });
 
@@ -85,7 +84,7 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Modify a creator details
     function modifyCreator(
-        string memory profileUrl, 
+        string memory profileUrl,
         uint256 cost,
         uint256 minTimeToDeliver
     ) external {
@@ -116,21 +115,14 @@ contract CliptoExchange is ReentrancyGuard {
         // Add the request to the creator's requests array.
         require(msg.value >= creators[creator].cost, "Insufficient value");
         require(deadline >= creators[creator].minTimeToDeliver + block.timestamp, "Deadline too short");
-        requests[creator].push(Request({
-            requester: msg.sender, 
-            amount: msg.value, 
-            delivered: false, 
-            deadline: deadline,
-            refunded: false
-        }));
+        requests[creator].push(
+            Request({requester: msg.sender, amount: msg.value, delivered: false, deadline: deadline, refunded: false})
+        );
 
         emit NewRequest(creator, msg.sender, requests[creator].length, msg.value);
     }
 
-    function deliverRequest(
-        uint256 index,
-        string memory _tokenURI
-    ) external nonReentrant {
+    function deliverRequest(uint256 index, string memory _tokenURI) external {
         require(requests[msg.sender][index].delivered == false, "Request already delivered");
         require(requests[msg.sender][index].refunded == false, "Request already refunded");
 
@@ -140,28 +132,20 @@ contract CliptoExchange is ReentrancyGuard {
         require(sent, "Delivery failed");
 
         emit DeliveredRequest(
-            msg.sender, 
-            requests[msg.sender][index].requester, 
+            msg.sender,
+            requests[msg.sender][index].requester,
             index,
             requests[msg.sender][index].amount
         );
     }
 
-    function refundRequest(
-        address creator,
-        uint256 index
-    ) external nonReentrant {
+    function refundRequest(address creator, uint256 index) external {
         require(requests[creator][index].delivered == false, "Request already delivered");
         require(requests[creator][index].refunded == false, "Request already refunded");
         requests[creator][index].refunded = true;
         (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
         require(sent, "Delivery failed");
 
-        emit RefundedRequest(
-            creator, 
-            requests[creator][index].requester,
-            index,
-            requests[creator][index].amount
-        );
+        emit RefundedRequest(creator, requests[creator][index].requester, index, requests[creator][index].amount);
     }
 }
