@@ -22,8 +22,6 @@ contract CliptoExchange {
         uint256 cost;
         /// @dev address of creator's associated nft collection
         address token;
-        /// @dev minimum time required to deliver in unix time
-        uint256 minTimeToDeliver;
     }
 
     /// @notice Emitted when a new creator is registered.
@@ -43,17 +41,11 @@ contract CliptoExchange {
     function registerCreator(
         string memory creatorName,
         string memory profileUrl,
-        uint256 cost,
-        uint256 minTimeToDeliver
+        uint256 cost
     ) external returns (address) {
         require(creators[msg.sender].token == address(0), "Already registered");
         address tokenAddress = address(new CliptoToken(creatorName));
-        creators[msg.sender] = Creator({
-            profileUrl: profileUrl,
-            cost: cost,
-            token: tokenAddress,
-            minTimeToDeliver: minTimeToDeliver
-        });
+        creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: tokenAddress});
 
         // Emit event
         emit CreatorRegistered(msg.sender, profileUrl, cost, tokenAddress);
@@ -62,14 +54,9 @@ contract CliptoExchange {
     }
 
     /// @notice Modify a creator details
-    function modifyCreator(
-        string memory profileUrl,
-        uint256 cost,
-        uint256 minTimeToDeliver
-    ) external {
+    function modifyCreator(string memory profileUrl, uint256 cost) external {
         creators[msg.sender].profileUrl = profileUrl;
         creators[msg.sender].cost = cost;
-        creators[msg.sender].minTimeToDeliver = minTimeToDeliver;
 
         // Emit event
         emit CreatorModified(msg.sender, profileUrl, cost);
@@ -110,7 +97,7 @@ contract CliptoExchange {
     function newRequest(address creator, uint256 deadline) external payable {
         // Add the request to the creator's requests array.
         require(msg.value >= creators[creator].cost, "Insufficient value");
-        require(deadline >= creators[creator].minTimeToDeliver + block.timestamp, "Deadline too short");
+
         requests[creator].push(
             Request({requester: msg.sender, amount: msg.value, delivered: false, deadline: deadline, refunded: false})
         );
