@@ -8,8 +8,11 @@ import {CliptoToken} from "./CliptoToken.sol";
 /// @dev Exchange contract for Clipto Videos
 contract CliptoExchange {
     /*///////////////////////////////////////////////////////////////
-                                STRUCTS
+                                CREATOR STORAGE
     //////////////////////////////////////////////////////////////*/
+
+    /// @dev Maps creator address to creator struct.
+    mapping(address => Creator) public creators;
 
     /// @dev Struct represent a creator account
     struct Creator {
@@ -22,30 +25,6 @@ contract CliptoExchange {
         /// @dev minimum time required to deliver in unix time
         uint256 minTimeToDeliver;
     }
-
-    /// @dev Struct representing a video request
-    struct Request {
-        /// @dev Address of the requester
-        address requester;
-        /// @dev Amount of L1 token set for the request
-        uint256 amount;
-        /// @dev Whether the request is delivered
-        bool delivered;
-        /// @dev deadline for the request in unix time
-        uint256 deadline;
-        /// @dev flag to indicate whether the request was refunded
-        bool refunded;
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                                CREATOR STORAGE
-    //////////////////////////////////////////////////////////////*/
-
-    /// @dev Maps creator address to creator struct.
-    mapping(address => Creator) public creators;
-
-    /// @dev Maps creator address to an array of requests.
-    mapping(address => Request[]) public requests;
 
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
@@ -100,6 +79,23 @@ contract CliptoExchange {
                                 REQUEST STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev Maps creator address to an array of requests.
+    mapping(address => Request[]) public requests;
+
+    /// @dev Struct representing a video request
+    struct Request {
+        /// @dev Address of the requester
+        address requester;
+        /// @dev Amount of L1 token set for the request
+        uint256 amount;
+        /// @dev Whether the request is delivered
+        bool delivered;
+        /// @dev deadline for the request in unix time
+        uint256 deadline;
+        /// @dev flag to indicate whether the request was refunded
+        bool refunded;
+    }
+
     /// @notice Emitted when a new request is created.
     event NewRequest(address indexed creator, address indexed requester, uint256 index, uint256 amount);
 
@@ -142,6 +138,7 @@ contract CliptoExchange {
     function refundRequest(address creator, uint256 index) external {
         require(requests[creator][index].delivered == false, "Request already delivered");
         require(requests[creator][index].refunded == false, "Request already refunded");
+
         requests[creator][index].refunded = true;
         (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
         require(sent, "Delivery failed");
