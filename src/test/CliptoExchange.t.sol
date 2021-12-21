@@ -17,19 +17,19 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         // Register creator.
         address tokenAddress = exchange.registerCreator(
             "Gabriel", 
-            "https://arweave.net/0xprofileurl", 
+            "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk", 
             1e18, 
-            1e18
+            2 days
         );
 
         // Retrieve creator information.
         (string memory profileUrl, uint256 cost, address token, uint minTimeToDeliver) = exchange.creators(address(this));
 
         // Ensure the data returned is correct.
-        assertEq(profileUrl, "https://arweave.net/0xprofileurl");
+        assertEq(profileUrl, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
         assertEq(cost, 1e18);
         assertEq(token, tokenAddress);
-        assertEq(minTimeToDeliver, 1e18);
+        assertEq(minTimeToDeliver, 2 days);
     }
 
     function testRequestCreation() public {
@@ -37,7 +37,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         testCreatorRegistration();
 
         // Create a new request (the creator address is address(this))
-        exchange.newRequest{value: 1e18}(address(this), 2e18);
+        exchange.newRequest{value: 1e18}(address(this), block.timestamp + 2 days);
 
         // Check that the request was created
         (address requester, uint256 value, bool delivered, uint256 deadline, bool refunded) = exchange.requests(address(this), 0);
@@ -46,19 +46,34 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         assertEq(requester, address(this));
         assertEq(value, 1e18);
         assertFalse(delivered);
-        assertEq(deadline, 2e18);
+        assertEq(deadline, block.timestamp + 2 days);
         assertFalse(refunded);
     }
+
 
     function testRequestDelivery() public {
         testRequestCreation();
 
         uint256 balanceBefore = address(this).balance;
-        exchange.deliverRequest(0, "http://website.com");
+        exchange.deliverRequest(0, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpk");
         (, , bool delivered, , ) = exchange.requests(address(this), 0);
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
+    }
+
+    function modifyCreator() public {
+        exchange.modifyCreator(
+            "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl", 
+            2e18, 
+            3 days
+        );
+
+        (string memory profileUrl, uint256 cost, address token, uint minTimeToDeliver) = exchange.creators(address(this));
+        // Ensure the data returned is correct.
+        assertEq(profileUrl, "https://arweave.net/BlrobCrH2-uAq9OvRkMrFFOIZcbrVdzAdtl-uu9TLpl");
+        assertEq(cost, 2e18);
+        assertEq(minTimeToDeliver, 3 days);
     }
 
     function onERC721Received(

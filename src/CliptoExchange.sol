@@ -89,6 +89,7 @@ contract CliptoExchange is ReentrancyGuard {
         uint256 cost,
         uint256 minTimeToDeliver
     ) external {
+        require(creators[msg.sender].token == address(0), "Not yet registered");
         creators[msg.sender].profileUrl = profileUrl;
         creators[msg.sender].cost = cost;
         creators[msg.sender].minTimeToDeliver = minTimeToDeliver;
@@ -155,7 +156,7 @@ contract CliptoExchange is ReentrancyGuard {
         require(requests[creator][index].refunded == false, "Request already refunded");
         requests[creator][index].refunded = true;
         (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
-        require(sent, "Delivery failed");
+        require(sent, "Refund failed");
 
         emit RefundedRequest(
             creator, 
