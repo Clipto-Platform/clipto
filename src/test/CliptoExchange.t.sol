@@ -31,19 +31,15 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         testCreatorRegistration();
 
         // Create a new request (the creator address is address(this))
-        exchange.newRequest{value: 1e18}(address(this), 2e18);
+        exchange.newRequest{value: 1e18}(address(this));
 
         // Check that the request was created
-        (address requester, uint256 value, bool delivered, uint256 deadline, bool refunded) = exchange.requests(
-            address(this),
-            0
-        );
+        (address requester, uint256 value, bool delivered, bool refunded) = exchange.requests(address(this), 0);
 
         // Ensure the data returned is correct.
         assertEq(requester, address(this));
         assertEq(value, 1e18);
         assertFalse(delivered);
-        assertEq(deadline, 2e18);
         assertFalse(refunded);
     }
 
@@ -52,7 +48,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
         uint256 balanceBefore = address(this).balance;
         exchange.deliverRequest(0, "http://website.com");
-        (, , bool delivered, , ) = exchange.requests(address(this), 0);
+        (, , bool delivered, ) = exchange.requests(address(this), 0);
 
         assertTrue(delivered);
         assertTrue(address(this).balance > balanceBefore + 9e17);
