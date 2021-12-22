@@ -15,6 +15,11 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
     string internal _symbol;
     bool internal initalized;
     address owner;
+    /// @notice represents 5% given a scale of 10,000
+    uint256 royaltyRate = 500;
+    uint256 scale = 1e5;
+
+    event RoyaltyRateSet(uint256 newRate);
 
     function initialize(string memory _creatorName) external {
         require(!initalized);
@@ -37,6 +42,20 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
     // See https://docs.opensea.io/docs/contract-level-metadata
     function contractURI() public pure returns (string memory) {
         return "https://clipto.io/contract-metadata.json";
+    }
+
+    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns(address, uint256) {
+        uint256 royaltyAmount = (salePrice * royaltyRate) / scale;
+        return (owner, royaltyAmount);
+    }
+
+    /// @notice allows the contract owner to set the royalty rate
+    /// @dev the rate should be represented scaled up by 10,000
+    ///   for example, 10% would be input as 100,000
+    function setRoyaltyRate(uint256 newRate) external {
+        require(msg.sender == owner, "only owner may set rate");
+        royaltyRate = newRate;
+        emit RoyaltyRateSet(newRate);
     }
 
     function safeMint(address to, string memory _tokenURI) public {
@@ -66,7 +85,8 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
+    /// @dev 0x2a55205a is the interfaceId for ERC2981
     function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId) || interfaceId == 0x2a55205a;
     }
 }

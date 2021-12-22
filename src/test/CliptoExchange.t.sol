@@ -23,7 +23,6 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
         // Retrieve creator information.
         (string memory profileUrl, uint256 cost, CliptoToken token) = exchange.creators(address(this));
-        address tokenAddress = address(token);
 
         // Ensure the data returned is correct.
         assertEq(profileUrl, "https://arweave.net/0xprofileurl");
