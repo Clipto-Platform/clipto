@@ -12,7 +12,7 @@ contract CliptoExchange {
     //////////////////////////////////////////////////////////////*/
 
     /// @dev Address of the Clipto Token implementation
-    address public TOKEN_IMPLEMENTATION;
+    address public immutable TOKEN_IMPLEMENTATION;
 
     constructor(address implementation) {
         TOKEN_IMPLEMENTATION = implementation;
