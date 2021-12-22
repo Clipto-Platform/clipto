@@ -1,2 +1,3 @@
-testFunc2() (gas: 553851)
-testFunc1() (gas: 553883)
+testRequestCreation() (gas: 2361126)
+testCreatorRegistration() (gas: 2280033)
+testRequestDelivery() (gas: 2523354)
