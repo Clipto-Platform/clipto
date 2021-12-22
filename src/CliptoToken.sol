@@ -15,7 +15,11 @@ contract CliptoToken is ERC721Upgradeable {
     // Counters.Counter private _tokenIdCounter;
 
     function initialize(string memory _creatorName) external {
-        __ERC721_init(abi.encodePacked("Clipto - ", _creatorName), "CTO");
+        __ERC721_init(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO");
+    }
+
+    function safeMint(address to, string memory data) external {
+        _safeMint(to, 0);
     }
 
     // // See https://docs.opensea.io/docs/contract-level-metadata
