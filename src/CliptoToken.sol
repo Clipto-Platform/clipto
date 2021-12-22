@@ -9,51 +9,66 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
-contract CliptoToken is ERC721Upgradeable {
-    // using Counters for Counters.Counter;
+contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
+    using Counters for Counters.Counter;
 
-    // Counters.Counter private _tokenIdCounter;
+    Counters.Counter private _tokenIdCounter;
+    string internal _name;
+    string internal _symbol;
+    bool internal initalized;
+    address owner;
 
-    function initialize(string memory _creatorName) external initializer {
-        __ERC721_init(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO");
+    function initialize(string memory _creatorName) external {
+        require(!initalized);
+
+        _name = string(abi.encodePacked("Clipto - ", _creatorName));
+        _symbol = "CTO";
+        initalized = true;
+
+        owner = msg.sender;
     }
 
-    function safeMint(address to, string memory data) external {
-        _safeMint(to, 0);
+    function name() public view override returns (string memory) {
+        return _name;
     }
 
-    // // See https://docs.opensea.io/docs/contract-level-metadata
-    // function contractURI() public pure returns (string memory) {
-    //     return "https://clipto.io/contract-metadata.json";
-    // }
+    function symbol() public view override returns (string memory) {
+        return _symbol;
+    }
 
-    // function safeMint(address to, string memory _tokenURI) public onlyOwner {
-    //     _safeMint(to, _tokenIdCounter.current());
-    //     _setTokenURI(_tokenIdCounter.current(), _tokenURI);
+    // See https://docs.opensea.io/docs/contract-level-metadata
+    function contractURI() public pure returns (string memory) {
+        return "https://clipto.io/contract-metadata.json";
+    }
 
-    //     _tokenIdCounter.increment();
-    // }
+    function safeMint(address to, string memory _tokenURI) public {
+        require(msg.sender == owner);
+        _safeMint(to, _tokenIdCounter.current());
+        _setTokenURI(_tokenIdCounter.current(), _tokenURI);
 
-    // /*
-    //  * The following functions are overrides required by Solidity.
-    //  */
-    // function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-    //     super._burn(tokenId);
-    // }
+        _tokenIdCounter.increment();
+    }
 
-    // function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-    //     return super.tokenURI(tokenId);
-    // }
+    /*
+     * The following functions are overrides required by Solidity.
+     */
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
+    }
 
-    // function _beforeTokenTransfer(
-    //     address from,
-    //     address to,
-    //     uint256 tokenId
-    // ) internal override(ERC721, ERC721Enumerable) {
-    //     super._beforeTokenTransfer(from, to, tokenId);
-    // }
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
+    }
 
-    // function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-    //     return super.supportsInterface(interfaceId);
-    // }
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override(ERC721, ERC721Enumerable) {
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
 }
