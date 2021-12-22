@@ -15,15 +15,19 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function testCreatorRegistration() public {
         // Register creator.
-        address tokenAddress = exchange.registerCreator("Gabriel", "https://arweave.net/0xprofileurl", 1e18);
+        exchange.registerCreator(
+            "Gabriel", 
+            "https://arweave.net/0xprofileurl", 
+            1e18
+        );
 
         // Retrieve creator information.
         (string memory profileUrl, uint256 cost, CliptoToken token) = exchange.creators(address(this));
+        address tokenAddress = address(token);
 
         // Ensure the data returned is correct.
         assertEq(profileUrl, "https://arweave.net/0xprofileurl");
         assertEq(cost, 1e18);
-        assertEq(address(token), tokenAddress);
     }
 
     function testRequestCreation() public {
