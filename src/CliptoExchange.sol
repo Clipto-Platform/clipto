@@ -3,7 +3,7 @@ pragma solidity 0.8.10;
 
 import {CliptoToken} from "./CliptoToken.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "lib/solmate/src/utils/ReentrancyGuard.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto

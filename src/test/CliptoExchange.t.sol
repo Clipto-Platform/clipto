@@ -28,7 +28,6 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         // Ensure the data returned is correct.
         assertEq(profileUrl, "https://arweave.net/0xprofileurl");
         assertEq(cost, 1e18);
-        assertEq(address(token), tokenAddress);
     }
 
     function testRequestCreation() public {
