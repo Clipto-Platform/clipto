@@ -8,6 +8,17 @@ import {CliptoToken} from "./CliptoToken.sol";
 /// @dev Exchange contract for Clipto Videos
 contract CliptoExchange {
     /*///////////////////////////////////////////////////////////////
+                                IMMUTABLES
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Address of the Clipto Token implementation
+    address public TOKEN_IMPLEMENTATION;
+
+    constructor(address implementation) {
+        TOKEN_IMPLEMENTATION = implementation;
+    }
+
+    /*///////////////////////////////////////////////////////////////
                                 CREATOR STORAGE
     //////////////////////////////////////////////////////////////*/
 
