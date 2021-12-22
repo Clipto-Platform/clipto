@@ -40,7 +40,7 @@ contract CliptoExchange {
     /// @param profileUrl Creator's profile on arweave.
     /// @param cost cost in L1 token
     /// @param tokenAddress address where NFT contract is deployed at
-    event CreatorRegistered(address indexed creator, string indexed profileUrl, uint256 cost, address tokenAddress);
+    event CreatorRegistered(address indexed creator, string indexed profileUrl, uint256 cost, CliptoToken tokenAddress);
 
     /// @notice Emitted when a new creator is modified.
     /// @param creator Address of the creator.
@@ -54,15 +54,17 @@ contract CliptoExchange {
         string memory profileUrl,
         uint256 cost
     ) external returns (address) {
-        require(creators[msg.sender].token == address(0), "Already registered");
+        require(address(creators[msg.sender].token) == address(0), "Already registered");
 
-        CliptoToken tokenAddress = new CliptoToken(creatorName);
-        creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: tokenAddress});
+        CliptoToken token = CliptoToken(deployProxy());
+        token.initialize(creatorName);
+        creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: token});
 
         // Emit event
-        emit CreatorRegistered(msg.sender, profileUrl, cost, tokenAddress);
+        emit CreatorRegistered(msg.sender, profileUrl, cost, token);
 
-        return tokenAddress;
+        // Return token address
+        return address(token);
     }
 
     /// @notice Modify a creator details
@@ -117,7 +119,7 @@ contract CliptoExchange {
         require(requests[msg.sender][index].delivered == false, "Request already delivered");
         require(requests[msg.sender][index].refunded == false, "Request already refunded");
 
-        CliptoToken(creators[msg.sender].token).safeMint(requests[msg.sender][index].requester, _tokenURI);
+        creators[msg.sender].token.safeMint(requests[msg.sender][index].requester, _tokenURI);
         requests[msg.sender][index].delivered = true;
         (bool sent, ) = msg.sender.call{value: requests[msg.sender][index].amount}("");
         require(sent, "Delivery failed");
