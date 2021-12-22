@@ -6,6 +6,26 @@ import {CliptoToken} from "../CliptoToken.sol";
 import {DSTestPlus} from "lib/solmate/src/test/utils/DSTestPlus.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
+struct Creator {
+    /// @dev Creator's profile url on arweave
+    string profileUrl;
+    /// @dev Minimum cost of a video
+    uint256 cost;
+    /// @dev address of creator's associated nft collection
+    CliptoToken token;
+}
+
+struct Request {
+    /// @dev Address of the requester
+    address requester;
+    /// @dev Amount of L1 token set for the request
+    uint256 amount;
+    /// @dev Whether the request is delivered
+    bool delivered;
+    /// @dev flag to indicate whether the request was refunded
+    bool refunded;
+}
+
 contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
     CliptoExchange internal exchange;
 
@@ -15,10 +35,15 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function testCreatorRegistration() public {
         // Register creator.
-        address tokenAddress = exchange.registerCreator("Gabriel", "https://arweave.net/0xprofileurl", 1e18);
+        exchange.registerCreator(
+            "Gabriel", 
+            "https://arweave.net/0xprofileurl", 
+            1e18
+        );
 
         // Retrieve creator information.
         (string memory profileUrl, uint256 cost, CliptoToken token) = exchange.creators(address(this));
+        address tokenAddress = address(token);
 
         // Ensure the data returned is correct.
         assertEq(profileUrl, "https://arweave.net/0xprofileurl");

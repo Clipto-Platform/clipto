@@ -2,11 +2,13 @@
 pragma solidity 0.8.10;
 
 import {CliptoToken} from "./CliptoToken.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto
 /// @dev Exchange contract for Clipto Videos
-contract CliptoExchange {
+contract CliptoExchange is ReentrancyGuard {
     /*///////////////////////////////////////////////////////////////
                                 IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -53,18 +55,15 @@ contract CliptoExchange {
         string memory creatorName,
         string memory profileUrl,
         uint256 cost
-    ) external returns (address) {
+    ) external {
         require(address(creators[msg.sender].token) == address(0), "Already registered");
 
-        CliptoToken token = CliptoToken(deployProxy());
+        CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
         token.initialize(creatorName);
         creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: token});
 
         // Emit event
         emit CreatorRegistered(msg.sender, profileUrl, cost, token);
-
-        // Return token address
-        return address(token);
     }
 
     /// @notice Modify a creator details
@@ -115,7 +114,17 @@ contract CliptoExchange {
         emit NewRequest(creator, msg.sender, requests[creator].length, msg.value);
     }
 
-    function deliverRequest(uint256 index, string memory _tokenURI) external {
+    /// @notice Allows adding to the value of a request
+    /// @dev The request's "amount" is increased by msg.value
+    function updateRequest(address creator, uint256 index) external payable {
+        require(msg.sender == requests[creator][index].requester, "only requester may update");
+        requests[creator][index].amount += msg.value;
+
+        // even though this isn't a new request, the event serves the purpose well
+        emit NewRequest(creator, msg.sender, index, requests[creator][index].amount);
+    }
+
+    function deliverRequest(uint256 index, string memory _tokenURI) external nonReentrant {
         require(requests[msg.sender][index].delivered == false, "Request already delivered");
         require(requests[msg.sender][index].refunded == false, "Request already refunded");
 
@@ -132,7 +141,7 @@ contract CliptoExchange {
         );
     }
 
-    function refundRequest(address creator, uint256 index) external {
+    function refundRequest(address creator, uint256 index) external nonReentrant {
         require(requests[creator][index].delivered == false, "Request already delivered");
         require(requests[creator][index].refunded == false, "Request already refunded");
 
@@ -141,35 +150,5 @@ contract CliptoExchange {
         require(sent, "Delivery failed");
 
         emit RefundedRequest(creator, requests[creator][index].requester, index, requests[creator][index].amount);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                              NFT UTILITIES
-    //////////////////////////////////////////////////////////////*/
-
-    /// @dev Deploy a mimimal proxy contract for a user's NFT collection.
-    function deployProxy() internal returns (address proxy) {
-        bytes20 implementation = bytes20(TOKEN_IMPLEMENTATION);
-
-        assembly {
-            // Read a free storage slot
-            let clone := mload(0x40)
-
-            // Store the constructor (10 bytes) + the 10 bytes of execution code that comes before the address
-            mstore(clone, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-
-            // Store the 20 bytes behind the clone pointer (where the zeroes start)
-            // 0x14 = 20
-            mstore(add(clone, 0x14), implementation)
-
-            // Store 32 bytes behind the implementation address
-            mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
-
-            // Use the CREATE opcode to deploy a new contract
-            // Send 0 Ether
-            // The code starts at pointer stored in "clone"
-            // The codesize is 55 bytes (0x37)
-            proxy := create(0, clone, 0x37)
-        }
     }
 }
