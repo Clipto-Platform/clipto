@@ -1,3 +1,3 @@
-testRequestCreation() (gas: 2361126)
-testCreatorRegistration() (gas: 2280033)
-testRequestDelivery() (gas: 2523354)
+testRequestCreation() (gas: 290092)
+testCreatorRegistration() (gas: 208999)
+testRequestDelivery() (gas: 375518)
