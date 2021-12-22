@@ -4,18 +4,28 @@ pragma solidity 0.8.10;
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
+import {IERC2981, IERC165} from "./interfaces/IERC2981.sol";
+import {IERC4494} from "./interfaces/IERC4494.sol";
 
-contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
+contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC2981, IERC4494 {
     using Counters for Counters.Counter;
+
+    /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
+  bytes32 public constant PERMIT_TYPEHASH = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
+  bytes32 internal nameHash;
+  bytes32 internal versionHash;
+  mapping(uint256 => uint256) private _nonces;
 
     Counters.Counter private _tokenIdCounter;
     string internal _name;
     string internal _symbol;
     bool internal initalized;
     address owner;
-    /// @notice represents 5% given a scale of 10,000
+    /// @notice rate * 10,000, default: 5%
     uint256 royaltyRate = 500;
     uint256 scale = 1e5;
 
@@ -29,6 +39,9 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
         initalized = true;
 
         owner = msg.sender;
+
+        nameHash = keccak256(bytes(_name));
+        versionHash = keccak256(bytes("0.0.1"));
     }
 
     function name() public view override returns (string memory) {
@@ -54,6 +67,7 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
     ///   for example, 10% would be input as 100,000
     function setRoyaltyRate(uint256 newRate) external {
         require(msg.sender == owner, "only owner may set rate");
+        require(newRate <= 50_000, "royalty rate must be <50%");
         royaltyRate = newRate;
         emit RoyaltyRateSet(newRate);
     }
@@ -85,8 +99,113 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage {
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    /// @dev 0x2a55205a is the interfaceId for ERC2981
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable) returns (bool) {
-        return super.supportsInterface(interfaceId) || interfaceId == 0x2a55205a;
+    function supportsInterface(bytes4 interfaceId) 
+        public view override(ERC721, ERC721Enumerable, IERC165) returns (bool) 
+    {
+        return super.supportsInterface(interfaceId) || 
+            interfaceId == type(IERC2981).interfaceId ||
+            interfaceId == type(IERC4494).interfaceId;
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                                PERMIT
+    //////////////////////////////////////////////////////////////*/
+
+    function transferWithPermit(
+    address from,
+    address to,
+    uint256 tokenId,
+    uint256 deadline,
+    bytes memory sig
+  ) external {
+    transferWithPermit(from, to, tokenId, deadline, sig, "");
+  }
+
+  function transferWithPermit(
+    address from,
+    address to,
+    uint256 tokenId,
+    uint256 deadline,
+    bytes memory sig,
+    bytes memory data
+  ) public {
+    permit(msg.sender, tokenId, deadline, sig);
+    _safeTransfer(from, to, tokenId, data);
+  }
+
+  // permit stuff
+  function nonces(uint256 tokenId) external view returns(uint256) {
+    require(_exists(tokenId), "nonces: query for nonexistent token");
+    return _nonce(tokenId);
+  }
+
+  function DOMAIN_SEPARATOR() public view returns (bytes32) {
+    return keccak256(
+        abi.encode(
+          keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+          nameHash,
+          versionHash,
+          block.chainid,
+          address(this)
+        )
+      );
+  }
+
+  function permit(
+        address spender,
+        uint256 tokenId,
+        uint256 deadline,
+        bytes memory sig
+    ) public override {
+      require(block.timestamp <= deadline, "Permit expired");
+
+      bytes32 digest =
+        ECDSA.toTypedDataHash(
+          DOMAIN_SEPARATOR(),
+          keccak256(
+            abi.encode(
+              PERMIT_TYPEHASH,
+              spender,
+              tokenId,
+              _nonces[tokenId],
+              deadline
+            )
+          )
+        );
+
+      (address recoveredAddress,) = ECDSA.tryRecover(digest, sig);
+
+      require(recoveredAddress != address(0), "Invalid signature");
+      require(spender != owner, "ERC721Permit: approval to current owner");
+      if(owner != recoveredAddress){
+        require(
+          // checks for both EIP2098 sigs and EIP1271 approvals
+          SignatureChecker.isValidSignatureNow(
+            owner,
+            digest,
+            sig
+          ),
+          "ERC721Permit: unauthorized"
+        );
+      }
+
+      _approve(spender, tokenId);
+    }
+
+    function _transfer(address from, address to, uint256 tokenId) internal override {
+      super._transfer(from, to, tokenId);
+      if(from != address(0)) {
+        _nonces[tokenId]++;
+      }
+    }
+
+    function _getChainId() internal view returns(uint256 chainId) {
+      assembly {
+        chainId := chainid()
+      }
+    }
+
+    function _nonce(uint256 tokenId) internal view returns(uint256) {
+      return _nonces[tokenId];
     }
 }
