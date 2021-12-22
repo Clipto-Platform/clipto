@@ -14,7 +14,7 @@ contract CliptoToken is ERC721Upgradeable {
 
     // Counters.Counter private _tokenIdCounter;
 
-    function initialize(string memory _creatorName) external {
+    function initialize(string memory _creatorName) external initializer {
         __ERC721_init(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO");
     }
 
