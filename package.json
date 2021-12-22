@@ -19,5 +19,8 @@
   "scripts": {
     "lint": "prettier --write \"src/**/*.sol\"",
     "solhint:check": "solhint --config ./.solhint.json \"src/**/*.sol\""
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^4.4.1"
   }
 }
