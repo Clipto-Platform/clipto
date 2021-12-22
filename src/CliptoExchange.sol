@@ -32,7 +32,7 @@ contract CliptoExchange {
         /// @dev Minimum cost of a video
         uint256 cost;
         /// @dev address of creator's associated nft collection
-        address token;
+        CliptoToken token;
     }
 
     /// @notice Emitted when a new creator is registered.
@@ -56,8 +56,7 @@ contract CliptoExchange {
     ) external returns (address) {
         require(creators[msg.sender].token == address(0), "Already registered");
 
-        // TODO: Do not deploy a new contract for each creator!
-        address tokenAddress = address(new CliptoToken(creatorName));
+        CliptoToken tokenAddress = new CliptoToken(creatorName);
         creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: tokenAddress});
 
         // Emit event
