@@ -2,17 +2,21 @@
 pragma solidity 0.8.10;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721Upgradeable} from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC721/ERC721Upgradeable.sol";
+
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
-contract CliptoToken is ERC721, ERC721Enumerable, ERC721URIStorage, Ownable {
+contract CliptoToken is ERC721Upgradeable, ERC721Enumerable, ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
 
-    constructor(string memory _creatorName) ERC721(string(abi.encodePacked("Clipto - ", _creatorName)), "CTO") {}
+    function initialize(string memory _creatorName) external {
+        __ERC721_init(abi.encodePacked("Clipto - ", _creatorName), "CTO");
+    }
 
     // See https://docs.opensea.io/docs/contract-level-metadata
     function contractURI() public pure returns (string memory) {
