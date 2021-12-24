@@ -6,5 +6,6 @@ set -eo pipefail
 . $(dirname $0)/common.sh
 
 # Deploy.
-CliptoAddr=$(deploy CliptoExchange)
+TokenAddr=$(deploy CliptoToken)
+CliptoAddr=$(deploy CliptoExchange $TokenAddr)
 log "CliptoExchange deployed at:" $CliptoAddr
