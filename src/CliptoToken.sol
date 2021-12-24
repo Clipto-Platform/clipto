@@ -15,10 +15,10 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
     using Counters for Counters.Counter;
 
     /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
-  bytes32 public constant PERMIT_TYPEHASH = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
-  bytes32 internal nameHash;
-  bytes32 internal versionHash;
-  mapping(uint256 => uint256) private _nonces;
+    bytes32 public constant PERMIT_TYPEHASH = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
+    bytes32 internal nameHash;
+    bytes32 internal versionHash;
+    mapping(uint256 => uint256) private _nonces;
 
     Counters.Counter private _tokenIdCounter;
     string internal _name;
@@ -57,7 +57,7 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
         return "https://clipto.io/contract-metadata.json";
     }
 
-    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns(address, uint256) {
+    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256) {
         uint256 royaltyAmount = (salePrice * royaltyRate) / scale;
         return (owner, royaltyAmount);
     }
@@ -99,10 +99,14 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
         super._beforeTokenTransfer(from, to, tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) 
-        public view override(ERC721, ERC721Enumerable, IERC165) returns (bool) 
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable, IERC165)
+        returns (bool)
     {
-        return super.supportsInterface(interfaceId) || 
+        return
+            super.supportsInterface(interfaceId) ||
             interfaceId == type(IERC2981).interfaceId ||
             interfaceId == type(IERC4494).interfaceId;
     }
@@ -112,100 +116,92 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
     //////////////////////////////////////////////////////////////*/
 
     function transferWithPermit(
-    address from,
-    address to,
-    uint256 tokenId,
-    uint256 deadline,
-    bytes memory sig
-  ) external {
-    transferWithPermit(from, to, tokenId, deadline, sig, "");
-  }
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 deadline,
+        bytes memory sig
+    ) external {
+        transferWithPermit(from, to, tokenId, deadline, sig, "");
+    }
 
-  function transferWithPermit(
-    address from,
-    address to,
-    uint256 tokenId,
-    uint256 deadline,
-    bytes memory sig,
-    bytes memory data
-  ) public {
-    permit(msg.sender, tokenId, deadline, sig);
-    _safeTransfer(from, to, tokenId, data);
-  }
+    function transferWithPermit(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 deadline,
+        bytes memory sig,
+        bytes memory data
+    ) public {
+        permit(msg.sender, tokenId, deadline, sig);
+        _safeTransfer(from, to, tokenId, data);
+    }
 
-  // permit stuff
-  function nonces(uint256 tokenId) external view returns(uint256) {
-    require(_exists(tokenId), "nonces: query for nonexistent token");
-    return _nonce(tokenId);
-  }
+    // permit stuff
+    function nonces(uint256 tokenId) external view returns (uint256) {
+        require(_exists(tokenId), "nonces: query for nonexistent token");
+        return _nonce(tokenId);
+    }
 
-  function DOMAIN_SEPARATOR() public view returns (bytes32) {
-    return keccak256(
-        abi.encode(
-          keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-          nameHash,
-          versionHash,
-          block.chainid,
-          address(this)
-        )
-      );
-  }
+    function DOMAIN_SEPARATOR() public view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                    nameHash,
+                    versionHash,
+                    block.chainid,
+                    address(this)
+                )
+            );
+    }
 
-  function permit(
+    function permit(
         address spender,
         uint256 tokenId,
         uint256 deadline,
         bytes memory sig
     ) public override {
-      require(block.timestamp <= deadline, "Permit expired");
+        require(block.timestamp <= deadline, "Permit expired");
 
-      bytes32 digest =
-        ECDSA.toTypedDataHash(
-          DOMAIN_SEPARATOR(),
-          keccak256(
-            abi.encode(
-              PERMIT_TYPEHASH,
-              spender,
-              tokenId,
-              _nonces[tokenId],
-              deadline
-            )
-          )
+        bytes32 digest = ECDSA.toTypedDataHash(
+            DOMAIN_SEPARATOR(),
+            keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, _nonces[tokenId], deadline))
         );
 
-      (address recoveredAddress,) = ECDSA.tryRecover(digest, sig);
+        (address recoveredAddress, ) = ECDSA.tryRecover(digest, sig);
 
-      require(recoveredAddress != address(0), "Invalid signature");
-      require(spender != owner, "ERC721Permit: approval to current owner");
-      if(owner != recoveredAddress){
-        require(
-          // checks for both EIP2098 sigs and EIP1271 approvals
-          SignatureChecker.isValidSignatureNow(
-            owner,
-            digest,
-            sig
-          ),
-          "ERC721Permit: unauthorized"
-        );
-      }
+        require(recoveredAddress != address(0), "Invalid signature");
+        require(spender != owner, "ERC721Permit: approval to current owner");
+        if (owner != recoveredAddress) {
+            require(
+                // checks for both EIP2098 sigs and EIP1271 approvals
+                SignatureChecker.isValidSignatureNow(owner, digest, sig),
+                "ERC721Permit: unauthorized"
+            );
+        }
 
-      _approve(spender, tokenId);
+        _approve(spender, tokenId);
     }
 
-    function _transfer(address from, address to, uint256 tokenId) internal override {
-      super._transfer(from, to, tokenId);
-      if(from != address(0)) {
-        _nonces[tokenId]++;
-      }
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal override {
+        super._transfer(from, to, tokenId);
+        if (from != address(0)) {
+            _nonces[tokenId]++;
+        }
     }
 
-    function _getChainId() internal view returns(uint256 chainId) {
-      assembly {
-        chainId := chainid()
-      }
+    function _getChainId() internal view returns (uint256 chainId) {
+        assembly {
+            chainId := chainid()
+        }
     }
 
-    function _nonce(uint256 tokenId) internal view returns(uint256) {
-      return _nonces[tokenId];
+    function _nonce(uint256 tokenId) internal view returns (uint256) {
+        return _nonces[tokenId];
     }
 }

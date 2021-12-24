@@ -47,10 +47,7 @@ contract CliptoExchange is ReentrancyGuard {
     event CreatorModified(address indexed creator, uint256 cost);
 
     /// @notice Register a new creator
-    function registerCreator(
-        string memory creatorName,
-        uint256 cost
-    ) external {
+    function registerCreator(string memory creatorName, uint256 cost) external {
         require(address(creators[msg.sender].token) == address(0), "Already registered");
 
         CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
