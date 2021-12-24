@@ -37,14 +37,14 @@ contract CliptoExchange is ReentrancyGuard {
     /// @notice Register a new creator
     function registerCreator(string memory creatorName, uint256 cost) external {
         // Ensure that the creator has not been registered.
-        require(address(creators[msg.sender].token) == address(0), "Already registered");
+        require(address(creators[msg.sender]) == address(0), "Already registered");
 
         // Deploy a new CliptoToken contract for the creator.
         CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
         token.initialize(creatorName);
         creators[msg.sender] = token;
 
-        // Emit creator registrartion event
+        // Emit creator registration event.
         emit CreatorRegistered(msg.sender, token);
     }
 
@@ -61,66 +61,82 @@ contract CliptoExchange is ReentrancyGuard {
         address requester;
         /// @dev Amount of L1 token set for the request
         uint256 amount;
-        /// @dev URI representing the request.
-        string uri;
         /// @dev Boolean indicating whether the request has been fulfilled/refunded.
         bool fulfilled;
     }
 
     /// @notice Emitted when a new request is created.
-    event NewRequest(address indexed creator, address indexed requester, string indexed uri, uint256 amount);
+    /// @param creator Address of the creator.
+    /// @param requester Address of the requester.
+    /// @param amount Amount paid for the request.
+    /// @param index Index of the request in the creator's array of tokens.
+    event NewRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
+
+    /// @notice Emitted when a request is updated.
+    /// @param creator Address of the creator.
+    /// @param requester Address of the requester.
+    /// @param amountIncreased Amount increased in the request.
+    /// @param index Index of the request in the creator's array of tokens.
+    event RequestUpdated(address indexed creator, address indexed requester, uint256 amountIncreased, uint256 index);
 
     /// @notice Emitted when a request is delivered
-    event DeliveredRequest(address indexed creator, address indexed requester, uint256 index, uint256 amount);
+    event DeliveredRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
 
     /// @notice Emitted when a request is refunded
-    event RefundedRequest(address indexed creator, address indexed requester, uint256 index, uint256 amount);
+    event RefundedRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
-    function newRequest(address creator, string memory request) external payable {
-        require(msg.value >= creators[creator].cost, "Insufficient value");
+    function newRequest(address creator) external payable {
+        // Push the request to the creator's request array.
+        requests[creator].push(Request({requester: msg.sender, amount: msg.value, fulfilled: false}));
 
-        requests[creator].push(Request({requester: msg.sender, amount: msg.value, request: requset, fulfilled: false}));
-
-        emit NewRequest(creator, msg.sender, requests[creator].length, msg.value);
+        // Emit new request event.
+        emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1);
     }
 
     /// @notice Allows adding to the value of a request
     /// @dev The request's "amount" is increased by msg.value
     function updateRequest(address creator, uint256 index) external payable {
-        require(msg.sender == requests[creator][index].requester, "only requester may update");
+        // Update the request amount.
         requests[creator][index].amount += msg.value;
 
-        // even though this isn't a new request, the event serves the purpose well
-        emit NewRequest(creator, msg.sender, index, requests[creator][index].amount);
+        // Emit Update Request event.
+        emit RequestUpdated(creator, msg.sender, msg.value, index);
     }
 
-    function deliverRequest(uint256 index, string memory _tokenURI) external nonReentrant {
-        require(requests[msg.sender][index].delivered == false, "Request already delivered");
-        require(requests[msg.sender][index].refunded == false, "Request already refunded");
+    function deliverRequest(uint256 index, string memory tokenURI) external nonReentrant {
+        // Store the request in memory.
+        Request memory request = requests[msg.sender][index];
 
-        creators[msg.sender].token.safeMint(requests[msg.sender][index].requester, _tokenURI);
-        requests[msg.sender][index].delivered = true;
-        (bool sent, ) = msg.sender.call{value: requests[msg.sender][index].amount}("");
+        // Ensure that the request has not been fulfilled.
+        require(!request.fulfilled, "Request already fulfilled");
+
+        // Mint the token to the requester and mark the request as fulfilled.
+        creators[msg.sender].safeMint(request.requester, tokenURI);
+        requests[msg.sender][index].fulfilled = true;
+
+        // Ensure the transfer is successful.
+        (bool sent, ) = msg.sender.call{value: request.amount}("");
         require(sent, "Delivery failed");
 
-        emit DeliveredRequest(
-            msg.sender,
-            requests[msg.sender][index].requester,
-            index,
-            requests[msg.sender][index].amount
-        );
+        // Emit the delivered request value.
+        emit DeliveredRequest(msg.sender, request.requester, request.amount, index);
     }
 
     function refundRequest(address creator, uint256 index) external nonReentrant {
-        require(requests[creator][index].delivered == false, "Request already delivered");
-        require(requests[creator][index].refunded == false, "Request already refunded");
+        // Store the request in memory.
+        Request memory request = requests[msg.sender][index];
 
-        requests[creator][index].refunded = true;
+        // Ensure that the request has not been fulfilled.
+        require(!request.fulfilled, "Request already delivered");
+
+        // Refend the request.
+        requests[creator][index].fulfilled = true;
         (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
         require(sent, "Delivery failed");
 
-        emit RefundedRequest(creator, requests[creator][index].requester, index, requests[creator][index].amount);
+        // Emit the refunded request value.
+        emit RefundedRequest(creator, request.requester, index, request.amount);
     }
 }
