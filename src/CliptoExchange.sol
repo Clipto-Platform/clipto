@@ -46,7 +46,7 @@ contract CliptoExchange is ReentrancyGuard {
     /// @notice Emitted when a new creator is modified.
     /// @param creator Address of the creator.
     /// @param cost cost in L1 token
-    event CreatorModified(address indexed creator, uint256 cost);
+    event CostUpdated(address indexed creator, uint256 cost);
 
     /// @notice Register a new creator
     function registerCreator(string memory creatorName, uint256 cost) external {
@@ -63,12 +63,12 @@ contract CliptoExchange is ReentrancyGuard {
     }
 
     /// @notice Modify a creator details
-    function modifyCreator(uint256 cost) external {
+    function updateCost(uint256 cost) external {
         // Modify the cost of a creator.
         creators[msg.sender].cost = cost;
 
         // Emit event
-        emit CreatorModified(msg.sender, cost);
+        emit CostUpdated(msg.sender, cost);
     }
 
     /*///////////////////////////////////////////////////////////////
