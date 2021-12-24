@@ -16,6 +16,8 @@ contract CliptoExchange is ReentrancyGuard {
     /// @dev Address of the Clipto Token implementation
     address public immutable TOKEN_IMPLEMENTATION;
 
+    /// @dev Deploy a new Clipto Exchange contract.
+    /// @param implementation Address of the Clipto Token implementation contract.
     constructor(address implementation) {
         TOKEN_IMPLEMENTATION = implementation;
     }
@@ -48,18 +50,21 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Register a new creator
     function registerCreator(string memory creatorName, uint256 cost) external {
+        // Ensure that the creator has not been registered.
         require(address(creators[msg.sender].token) == address(0), "Already registered");
 
+        // Deploy a new CliptoToken contract for the creator.
         CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
         token.initialize(creatorName);
         creators[msg.sender] = Creator({cost: cost, token: token});
 
-        // Emit event
+        // Emit creator registrartion event
         emit CreatorRegistered(msg.sender, cost, token);
     }
 
     /// @notice Modify a creator details
     function modifyCreator(uint256 cost) external {
+        // Modify the cost of a creator.
         creators[msg.sender].cost = cost;
 
         // Emit event
