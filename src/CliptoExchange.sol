@@ -84,14 +84,14 @@ contract CliptoExchange is ReentrancyGuard {
         address requester;
         /// @dev Amount of L1 token set for the request
         uint256 amount;
-        /// @dev Whether the request is delivered
-        bool delivered;
-        /// @dev flag to indicate whether the request was refunded
-        bool refunded;
+        /// @dev URI representing the request.
+        string uri;
+        /// @dev Boolean indicating whether the request has been fulfilled/refunded.
+        bool fulfilled;
     }
 
     /// @notice Emitted when a new request is created.
-    event NewRequest(address indexed creator, address indexed requester, uint256 index, uint256 amount);
+    event NewRequest(address indexed creator, address indexed requester, string indexed uri, uint256 amount);
 
     /// @notice Emitted when a request is delivered
     event DeliveredRequest(address indexed creator, address indexed requester, uint256 index, uint256 amount);
