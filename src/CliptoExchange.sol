@@ -26,27 +26,13 @@ contract CliptoExchange is ReentrancyGuard {
                                 CREATOR STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @dev Maps creator address to creator struct.
-    mapping(address => Creator) public creators;
-
-    /// @dev Struct representing a creator account
-    struct Creator {
-        /// @dev Minimum cost of a video
-        uint256 cost;
-        /// @dev address of creator's associated nft collection
-        CliptoToken token;
-    }
+    /// @dev Maps creator address to their CliptoToken contract.
+    mapping(address => CliptoToken) public creators;
 
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
-    /// @param cost cost in L1 token
-    /// @param tokenAddress address where NFT contract is deployed at
-    event CreatorRegistered(address indexed creator, uint256 cost, CliptoToken tokenAddress);
-
-    /// @notice Emitted when a new creator is modified.
-    /// @param creator Address of the creator.
-    /// @param cost cost in L1 token
-    event CostUpdated(address indexed creator, uint256 cost);
+    /// @param token Address of the CliptoToken contract.
+    event CreatorRegistered(address indexed creator, CliptoToken indexed token);
 
     /// @notice Register a new creator
     function registerCreator(string memory creatorName, uint256 cost) external {
@@ -56,19 +42,10 @@ contract CliptoExchange is ReentrancyGuard {
         // Deploy a new CliptoToken contract for the creator.
         CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
         token.initialize(creatorName);
-        creators[msg.sender] = Creator({cost: cost, token: token});
+        creators[msg.sender] = token;
 
         // Emit creator registrartion event
-        emit CreatorRegistered(msg.sender, cost, token);
-    }
-
-    /// @notice Modify a creator details
-    function updateCost(uint256 cost) external {
-        // Modify the cost of a creator.
-        creators[msg.sender].cost = cost;
-
-        // Emit event
-        emit CostUpdated(msg.sender, cost);
+        emit CreatorRegistered(msg.sender, token);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -101,11 +78,10 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
-    function newRequest(address creator) external payable {
-        // Add the request to the creator's requests array.
+    function newRequest(address creator, string memory request) external payable {
         require(msg.value >= creators[creator].cost, "Insufficient value");
 
-        requests[creator].push(Request({requester: msg.sender, amount: msg.value, delivered: false, refunded: false}));
+        requests[creator].push(Request({requester: msg.sender, amount: msg.value, request: requset, fulfilled: false}));
 
         emit NewRequest(creator, msg.sender, requests[creator].length, msg.value);
     }
