@@ -29,8 +29,6 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @dev Struct representing a creator account
     struct Creator {
-        /// @dev Creator's profile url on arweave
-        string profileUrl;
         /// @dev Minimum cost of a video
         uint256 cost;
         /// @dev address of creator's associated nft collection
@@ -39,40 +37,36 @@ contract CliptoExchange is ReentrancyGuard {
 
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
-    /// @param profileUrl Creator's profile on arweave.
     /// @param cost cost in L1 token
     /// @param tokenAddress address where NFT contract is deployed at
-    event CreatorRegistered(address indexed creator, string indexed profileUrl, uint256 cost, CliptoToken tokenAddress);
+    event CreatorRegistered(address indexed creator, uint256 cost, CliptoToken tokenAddress);
 
     /// @notice Emitted when a new creator is modified.
     /// @param creator Address of the creator.
-    /// @param profileUrl Creator's profile on arweave.
     /// @param cost cost in L1 token
-    event CreatorModified(address indexed creator, string indexed profileUrl, uint256 cost);
+    event CreatorModified(address indexed creator, uint256 cost);
 
     /// @notice Register a new creator
     function registerCreator(
         string memory creatorName,
-        string memory profileUrl,
         uint256 cost
     ) external {
         require(address(creators[msg.sender].token) == address(0), "Already registered");
 
         CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
         token.initialize(creatorName);
-        creators[msg.sender] = Creator({profileUrl: profileUrl, cost: cost, token: token});
+        creators[msg.sender] = Creator({cost: cost, token: token});
 
         // Emit event
-        emit CreatorRegistered(msg.sender, profileUrl, cost, token);
+        emit CreatorRegistered(msg.sender, cost, token);
     }
 
     /// @notice Modify a creator details
-    function modifyCreator(string memory profileUrl, uint256 cost) external {
-        creators[msg.sender].profileUrl = profileUrl;
+    function modifyCreator(uint256 cost) external {
         creators[msg.sender].cost = cost;
 
         // Emit event
-        emit CreatorModified(msg.sender, profileUrl, cost);
+        emit CreatorModified(msg.sender, cost);
     }
 
     /*///////////////////////////////////////////////////////////////
