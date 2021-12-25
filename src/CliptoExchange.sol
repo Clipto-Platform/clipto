@@ -126,8 +126,9 @@ contract CliptoExchange is ReentrancyGuard {
 
     function refundRequest(address creator, uint256 index) external nonReentrant {
         // Store the request in memory.
-        Request memory request = requests[msg.sender][index];
-
+        Request memory request = requests[creator][index];
+        // Ensure that only the requester can ask for a refund
+        require(request.requester == msg.sender, "Not requester");
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already delivered");
 
