@@ -35,7 +35,7 @@ contract CliptoExchange is ReentrancyGuard {
     event CreatorRegistered(address indexed creator, CliptoToken indexed token);
 
     /// @notice Register a new creator
-    function registerCreator(string memory creatorName, uint256 cost) external {
+    function registerCreator(string memory creatorName) external {
         // Ensure that the creator has not been registered.
         require(address(creators[msg.sender]) == address(0), "Already registered");
 
@@ -126,8 +126,9 @@ contract CliptoExchange is ReentrancyGuard {
 
     function refundRequest(address creator, uint256 index) external nonReentrant {
         // Store the request in memory.
-        Request memory request = requests[msg.sender][index];
-
+        Request memory request = requests[creator][index];
+        // Ensure that only the requester can ask for a refund
+        require(request.requester == msg.sender, "Not requester");
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already delivered");
 
