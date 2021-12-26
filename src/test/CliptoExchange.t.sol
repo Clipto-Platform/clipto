@@ -15,7 +15,7 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     function testCreatorRegistration() public {
         // Register creator.
-        exchange.registerCreator("Gabriel", 1e18);
+        exchange.registerCreator("Gabriel");
 
         // Retrieve creator information.
         address token = address(exchange.creators(address(this)));
