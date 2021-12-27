@@ -132,7 +132,7 @@ contract CliptoExchange is ReentrancyGuard {
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already delivered");
 
-        // Refend the request.
+        // Refund the request.
         requests[creator][index].fulfilled = true;
         (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
         require(sent, "Delivery failed");
