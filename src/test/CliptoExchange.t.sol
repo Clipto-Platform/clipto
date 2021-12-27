@@ -87,6 +87,13 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         assertEq(token.totalSupply(), 0);
     }
 
+    // Check if deliverRequests returns 0 value if called without newRequest
+    function testFail_deliverRequestWithoutRequest() public {
+        test_creatorRegistration();
+        uint256 balanceBefore = address(this).balance;
+        exchange.deliverRequest(0, "http://website.com");
+    }
+
     // Check if refund is possible after request is delivered 
     function testFail_requestDeliverRequestRefund() public {
         test_requestCreation();
