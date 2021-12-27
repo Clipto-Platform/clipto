@@ -114,6 +114,24 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         exchange.registerCreator("Gabriel");
     }
 
+    // Check if delivery is not possible from unknown indices
+    // This is a symbolic test and can take a while to run
+    function proveFail_deliverUnknownIndices(uint256 index) public {
+        test_requestCreation();
+        if (index > 0) {
+            exchange.deliverRequest(index, "http://website.com");
+        }
+    }
+
+    // Check if refund is not possible from unknown indices
+    // This is a symbolic test and can take a while to run
+    function proveFail_refundUnknownIndices(uint256 index) public {
+        test_requestCreation();
+        if (index > 0) {
+            exchange.refundRequest(address(this), index);
+        }
+    }
+
     function onERC721Received(
         address,
         address,
