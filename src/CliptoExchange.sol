@@ -98,6 +98,10 @@ contract CliptoExchange is ReentrancyGuard {
     /// @notice Allows adding to the value of a request
     /// @dev The request's "amount" is increased by msg.value
     function updateRequest(address creator, uint256 index) external payable {
+        // Only allow original requester to updateRequest
+        // If others can contribute, the original requester can rug pull everyone by calling refund
+        require(requests[creator][index].requester == msg.sender, "Not requester");
+
         // Update the request amount.
         requests[creator][index].amount += msg.value;
 
@@ -105,6 +109,9 @@ contract CliptoExchange is ReentrancyGuard {
         emit RequestUpdated(creator, msg.sender, msg.value, index);
     }
 
+    /// @notice Allows the creator to deliver on a request by minting a NFT to requester
+    /// @dev The creator receives funds from contract specified by the Request struct and 
+    ///     the requester receives an NFT in exchange
     function deliverRequest(uint256 index, string memory tokenURI) external nonReentrant {
         // Store the request in memory.
         Request memory request = requests[msg.sender][index];
@@ -124,6 +131,8 @@ contract CliptoExchange is ReentrancyGuard {
         emit DeliveredRequest(msg.sender, request.requester, request.amount, index);
     }
 
+    /// @notice Allows the requester to be refunded if the creator fails to deliver
+    /// @dev The requester received funds from the contract as specified by the Request struct
     function refundRequest(address creator, uint256 index) external nonReentrant {
         // Store the request in memory.
         Request memory request = requests[creator][index];
