@@ -5,14 +5,14 @@ clipto is a decentralized service that lets users hire creators to make personal
 ## Contributing
 
 ### Contract Setup
-Run `make` to install the needed dependencies
- - [Install dapptools](https://github.com/dapphub/dapptools)
+ - [Install dapptools](https://github.com/dapphub/dapptools) / [on macOS ARM](https://roycewells.io/writing/dapptools-m1/)
  - nix-env is a prerequiste to dapptools so you may not need to install nix-env.
- - You need to install `nix-env`. [Mac install](https://wickedchicken.github.io/post/macos-nix-setup/)
+ - You need to install `nix-env`. [macOS install](https://wickedchicken.github.io/post/macos-nix-setup/)
 
- 1. `dapp build`
-   This will the abi for the contract in `./out`. If you make changes and you never build or test (testing automatically builds) and proceed to the next step, you might be using an older version of a contract resulting in inexpected behavior.
- 2. Terminal 1: `dapp testnet`
+ 1. `make`
+ 2. `dapp build`
+   This will output all the ABIs for the contracts in `./out`. If you make changes and you never build or test (testing automatically builds) and proceed to the next step, you might be using an older version of a contract resulting in inexpected behavior.
+ 3. Terminal 1: `dapp testnet`
   This will output your contract settings:
 ```
 dapp-testnet:   RPC URL: http://127.0.0.1:8545
@@ -24,8 +24,8 @@ dapp-testnet:   Account: 0x20c7ec45C46981fB1D10033c166D852EfFf206bc (default)
 ```
 
 You want to copy the address of `Account` for the next step.
- 3. Terminal 2: `export ETH_FROM=<Account address here>`
- 4. Terminal 2: `./scripts/deploy.sh`. If it prompts you for a password, testnet password is always nothing. So just press enter. When the script is done and is successful, the green text
+ 4. Terminal 2: `export ETH_FROM=<Account address here>`
+ 5. Terminal 2: `./scripts/deploy.sh`. If it prompts you for a password, testnet password is always nothing. So just press enter. When the script is done and is successful, the green text
  ```
  CliptoExchange deployed at: <address>
  ``` 
