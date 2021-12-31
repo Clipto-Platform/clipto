@@ -145,6 +145,6 @@ contract CliptoExchange is ReentrancyGuard {
         require(sent, "Delivery failed");
 
         // Emit the refunded request value.
-        emit RefundedRequest(creator, request.requester, index, request.amount);
+        emit RefundedRequest(creator, request.requester, request.amount, index);
     }
 }
