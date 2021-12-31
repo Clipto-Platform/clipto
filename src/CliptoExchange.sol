@@ -61,7 +61,7 @@ contract CliptoExchange is ReentrancyGuard {
         address requester;
         /// @dev Amount of L1 token set for the request
         uint256 amount;
-        /// @dev Boolean indicating whether the request has been fulfilled/refunded.
+        /// @dev Boolean where false = not yet started and true = fulfilled or refunded.
         bool fulfilled;
     }
 
