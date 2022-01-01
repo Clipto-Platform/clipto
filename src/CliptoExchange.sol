@@ -17,8 +17,8 @@ contract CliptoExchange is ReentrancyGuard, Ownable {
     /// @dev Address of the Clipto Token implementation
     address public immutable TOKEN_IMPLEMENTATION;
 
-    /// @notice rate * 1,000,000, default: 5%
-    uint256 public feeRate = 50_000;
+    /// @notice rate * 1,000,000, default: 0%
+    uint256 public feeRate = 0;
     uint256 public scale = 1e6;
 
     /// @dev Deploy a new Clipto Exchange contract.
