@@ -24,9 +24,9 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
     string internal _name;
     string internal _symbol;
     bool internal initalized;
-    address owner;
-    uint256 royaltyRate;
-    uint256 scale;
+    address public owner;
+    uint256 public royaltyRate;
+    uint256 public scale;
 
     event RoyaltyRateSet(uint256 newRate);
 
@@ -43,9 +43,9 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
         nameHash = keccak256(bytes(_name));
         versionHash = keccak256(bytes("0.0.1"));
 
-        /// @notice rate * 10,000, default: 5%
+        /// @notice rate * 1,000,000, default: 5%
         royaltyRate = 50_000;
-        scale = 1e5;
+        scale = 1e6;
     }
 
     function name() public view override returns (string memory) {
@@ -62,6 +62,8 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
     }
 
     function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256) {
+        // salePrice * royaltyRate will overflow as salePrice approaches uint256
+        // but this is impossible as MATIC or AVAX tokens in circulation is < uint156
         uint256 royaltyAmount = (salePrice * royaltyRate) / scale;
         return (owner, royaltyAmount);
     }
