@@ -4,11 +4,12 @@ pragma solidity 0.8.10;
 import {CliptoToken} from "./CliptoToken.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ReentrancyGuard} from "lib/solmate/src/utils/ReentrancyGuard.sol";
+import {Ownable} from "./utils/Ownable.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto
 /// @dev Exchange contract for Clipto Videos
-contract CliptoExchange is ReentrancyGuard {
+contract CliptoExchange is ReentrancyGuard, Ownable {
     /*///////////////////////////////////////////////////////////////
                                 IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -16,19 +17,17 @@ contract CliptoExchange is ReentrancyGuard {
     /// @dev Address of the Clipto Token implementation
     address public immutable TOKEN_IMPLEMENTATION;
 
-    /// @dev Address receiving exchange fees
-    address immutable FEE_DESTINATION;
-
-    /// @notice rate * 10,000, default: 5%
+    /// @notice rate * 1,000,000, default: 5%
     uint256 public feeRate = 50_000;
-    uint256 public scale = 1e5;
+    uint256 public scale = 1e6;
 
     /// @dev Deploy a new Clipto Exchange contract.
     /// @param implementation Address of the Clipto Token implementation contract.
     /// @param feeDestination Address receiving exchange fees
-    constructor(address implementation, address feeDestination) {
+    constructor(address implementation, address feeDestination)
+        Ownable(feeDestination)
+    {
         TOKEN_IMPLEMENTATION = implementation;
-        FEE_DESTINATION = feeDestination;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -36,9 +35,7 @@ contract CliptoExchange is ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @dev Set exchange fee
-    function setFee(uint256 _feeRate, uint256 _scale) external {
-        require(msg.sender == FEE_DESTINATION, "Must be fee destination");
-
+    function setFee(uint256 _feeRate, uint256 _scale) external onlyOwner {
         feeRate = _feeRate;
         scale = _scale;
     }
@@ -143,9 +140,9 @@ contract CliptoExchange is ReentrancyGuard {
         creators[msg.sender].safeMint(request.requester, tokenURI);
         request.fulfilled = true;
 
-        // Take exchange fee
+        // Take exchange fee if fee > 0 
         uint256 feeAmount = (request.amount * feeRate) / scale;
-        (bool sent, ) = FEE_DESTINATION.call{value: feeAmount}("");
+        (bool sent, ) = owner.call{value: feeAmount}("");
         require(sent, "Fee delivery failed");
 
         // Remove exchange fee from the original request amount
