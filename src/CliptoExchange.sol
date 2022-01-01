@@ -61,7 +61,7 @@ contract CliptoExchange is ReentrancyGuard {
         address requester;
         /// @dev Amount of L1 token set for the request
         uint256 amount;
-        /// @dev Boolean indicating whether the request has been fulfilled/refunded.
+        /// @dev Boolean where false = not yet started and true = fulfilled or refunded.
         bool fulfilled;
     }
 
@@ -113,15 +113,14 @@ contract CliptoExchange is ReentrancyGuard {
     /// @dev The creator receives funds from contract specified by the Request struct and 
     ///     the requester receives an NFT in exchange
     function deliverRequest(uint256 index, string memory tokenURI) external nonReentrant {
-        // Store the request in memory.
-        Request memory request = requests[msg.sender][index];
+        Request storage request = requests[msg.sender][index];
 
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already fulfilled");
 
         // Mint the token to the requester and mark the request as fulfilled.
         creators[msg.sender].safeMint(request.requester, tokenURI);
-        requests[msg.sender][index].fulfilled = true;
+        request.fulfilled = true;
 
         // Ensure the transfer is successful.
         (bool sent, ) = msg.sender.call{value: request.amount}("");
@@ -134,19 +133,18 @@ contract CliptoExchange is ReentrancyGuard {
     /// @notice Allows the requester to be refunded if the creator fails to deliver
     /// @dev The requester received funds from the contract as specified by the Request struct
     function refundRequest(address creator, uint256 index) external nonReentrant {
-        // Store the request in memory.
-        Request memory request = requests[creator][index];
+        Request storage request = requests[creator][index];
         // Ensure that only the requester can ask for a refund
         require(request.requester == msg.sender, "Not requester");
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already delivered");
 
         // Refund the request.
-        requests[creator][index].fulfilled = true;
-        (bool sent, ) = requests[creator][index].requester.call{value: requests[creator][index].amount}("");
+        request.fulfilled = true;
+        (bool sent, ) = request.requester.call{value: requests[creator][index].amount}("");
         require(sent, "Delivery failed");
 
         // Emit the refunded request value.
-        emit RefundedRequest(creator, request.requester, index, request.amount);
+        emit RefundedRequest(creator, request.requester, request.amount, index);
     }
 }
