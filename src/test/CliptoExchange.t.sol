@@ -139,6 +139,19 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         }
     }
 
+    // check if royalty info is correct
+    function test_royaltyInfo(uint256 price) public {
+        test_creatorRegistration();
+
+        // Amount of MATIC tokens is not more than 10 billion
+        if (price < 10_000_000_000e18) {
+            CliptoToken token = CliptoToken(address(exchange.creators(address(this))));
+            uint256 ret;
+            (, ret) = token.royaltyInfo(0, price);
+            assertEq(ret, price * token.royaltyRate() / token.scale());
+        }
+    }
+
     function onERC721Received(
         address,
         address,
