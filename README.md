@@ -30,6 +30,9 @@ You want to copy the address of `Account` for the next step.
  CliptoExchange deployed at: <address>
  ``` 
  will appear. Save this address if you want to connect it to the frontend.
+
+Note for local testnet: fees will go to address `0x800852637eFA2e5C21C3E82FaD8CcdC708786817` unless you pass an address after `./scripts/deploy.sh`.
+
 ### Frontend Setup
  1. `./scripts/abi.sh CliptoExchange > ../clipto-frontend/src/abis/CliptoExchange.json`. Note that after the `>` is the relative path to the CliptoExchange.json file for the frontend.
  2. `npm run generate-types`

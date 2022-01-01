@@ -9,8 +9,10 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
     CliptoExchange internal exchange;
 
+    address feeDestination = 0x800852637eFA2e5C21C3E82FaD8CcdC708786817;
+
     function setUp() external {
-        exchange = new CliptoExchange(address(new CliptoToken()));
+        exchange = new CliptoExchange(address(new CliptoToken()), feeDestination);
     }
 
     // Correctness test for registerCreator()
@@ -55,12 +57,19 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         assertFalse(fulfilled);
 
         uint256 balanceBefore = address(this).balance;
+        uint256 feeBalanceBefore = address(feeDestination).balance;
         exchange.deliverRequest(0, "http://website.com");
         (, , fulfilled) = exchange.requests(address(this), 0);
 
+        uint256 feeRate = exchange.feeRate();
+        uint256 scale = exchange.scale();
+
+        uint256 feeAmount = (value * feeRate) / scale;
+        assertTrue(feeDestination.balance == feeBalanceBefore + feeAmount);
+
         // Check if contract state has been updated
         assertTrue(fulfilled);
-        assertTrue(address(this).balance > balanceBefore + 19e17);
+        assertTrue(address(this).balance > balanceBefore + 19e17 - feeAmount);
         
         // Check if token has been successfully minted
         CliptoToken token = exchange.creators(address(this));

@@ -16,10 +16,31 @@ contract CliptoExchange is ReentrancyGuard {
     /// @dev Address of the Clipto Token implementation
     address public immutable TOKEN_IMPLEMENTATION;
 
+    /// @dev Address receiving exchange fees
+    address immutable FEE_DESTINATION;
+
+    /// @notice rate * 10,000, default: 5%
+    uint256 public feeRate = 50_000;
+    uint256 public scale = 1e5;
+
     /// @dev Deploy a new Clipto Exchange contract.
     /// @param implementation Address of the Clipto Token implementation contract.
-    constructor(address implementation) {
+    /// @param feeDestination Address receiving exchange fees
+    constructor(address implementation, address feeDestination) {
         TOKEN_IMPLEMENTATION = implementation;
+        FEE_DESTINATION = feeDestination;
+    }
+
+    /*///////////////////////////////////////////////////////////////
+                              EXCHANGE FEES
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Set exchange fee
+    function setFee(uint256 _feeRate, uint256 _scale) external {
+        require(msg.sender == FEE_DESTINATION, "Must be fee destination");
+
+        feeRate = _feeRate;
+        scale = _scale;
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -122,12 +143,20 @@ contract CliptoExchange is ReentrancyGuard {
         creators[msg.sender].safeMint(request.requester, tokenURI);
         request.fulfilled = true;
 
+        // Take exchange fee
+        uint256 feeAmount = (request.amount * feeRate) / scale;
+        (bool sent, ) = FEE_DESTINATION.call{value: feeAmount}("");
+        require(sent, "Fee delivery failed");
+
+        // Remove exchange fee from the original request amount
+        uint256 paymentAmount = request.amount - feeAmount;
+
         // Ensure the transfer is successful.
-        (bool sent, ) = msg.sender.call{value: request.amount}("");
-        require(sent, "Delivery failed");
+        (sent, ) = msg.sender.call{value: paymentAmount}("");
+        require(sent, "Request delivery failed");
 
         // Emit the delivered request value.
-        emit DeliveredRequest(msg.sender, request.requester, request.amount, index);
+        emit DeliveredRequest(msg.sender, request.requester, paymentAmount, index);
     }
 
     /// @notice Allows the requester to be refunded if the creator fails to deliver
