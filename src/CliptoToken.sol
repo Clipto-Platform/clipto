@@ -61,6 +61,7 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
     function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256) {
         // salePrice * royaltyRate will overflow as salePrice approaches uint256
         // but this is impossible as MATIC or AVAX tokens in circulation is < uint156
+        tokenId;
         uint256 royaltyAmount = (salePrice * royaltyRate) / scale;
         return (owner, royaltyAmount);
     }
