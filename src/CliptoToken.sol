@@ -7,20 +7,17 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {IERC2981, IERC165} from "./interfaces/IERC2981.sol";
 import {IERC4494} from "./interfaces/IERC4494.sol";
 
 contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC2981, IERC4494 {
-    using Counters for Counters.Counter;
-
     /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
     bytes32 public constant PERMIT_TYPEHASH = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
     bytes32 internal nameHash;
     bytes32 internal versionHash;
     mapping(uint256 => uint256) private _nonces;
 
-    Counters.Counter private _tokenIdCounter;
+    uint256 public tokenIdCounter = 0;
     string internal _name;
     string internal _symbol;
     bool internal initalized;
@@ -80,10 +77,10 @@ contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC
 
     function safeMint(address to, string memory _tokenURI) public {
         require(msg.sender == owner);
-        _safeMint(to, _tokenIdCounter.current());
-        _setTokenURI(_tokenIdCounter.current(), _tokenURI);
+        _safeMint(to, tokenIdCounter);
+        _setTokenURI(tokenIdCounter, _tokenURI);
 
-        _tokenIdCounter.increment();
+        tokenIdCounter = tokenIdCounter + 1;
     }
 
     /*
