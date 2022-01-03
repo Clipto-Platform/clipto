@@ -4,12 +4,12 @@ pragma solidity 0.8.10;
 import {CliptoToken} from "./CliptoToken.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ReentrancyGuard} from "lib/solmate/src/utils/ReentrancyGuard.sol";
-import {Ownable} from "./utils/Ownable.sol";
+import {Ownable2} from "./utils/Ownable2.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto
 /// @dev Exchange contract for Clipto Videos
-contract CliptoExchange is ReentrancyGuard, Ownable {
+contract CliptoExchange is ReentrancyGuard, Ownable2 {
     /*///////////////////////////////////////////////////////////////
                                 IMMUTABLES
     //////////////////////////////////////////////////////////////*/
@@ -25,7 +25,7 @@ contract CliptoExchange is ReentrancyGuard, Ownable {
     /// @param implementation Address of the Clipto Token implementation contract.
     /// @param feeDestination Address receiving exchange fees
     constructor(address implementation, address feeDestination)
-        Ownable(feeDestination)
+        Ownable2(feeDestination)
     {
         TOKEN_IMPLEMENTATION = implementation;
     }
