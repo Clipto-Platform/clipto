@@ -70,20 +70,52 @@ contract CliptoExchange is ReentrancyGuard {
     /// @param requester Address of the requester.
     /// @param amount Amount paid for the request.
     /// @param index Index of the request in the creator's array of tokens.
-    event NewRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
+    event NewRequest(
+        address indexed creator, 
+        address indexed requester, 
+        uint256 amount, 
+        uint256 index
+    );
 
     /// @notice Emitted when a request is updated.
     /// @param creator Address of the creator.
     /// @param requester Address of the requester.
     /// @param amountIncreased Amount increased in the request.
     /// @param index Index of the request in the creator's array of tokens.
-    event RequestUpdated(address indexed creator, address indexed requester, uint256 amountIncreased, uint256 index);
+    event RequestUpdated(
+        address indexed creator, 
+        address indexed requester, 
+        uint256 amountIncreased, 
+        uint256 index
+    );
 
     /// @notice Emitted when a request is delivered
-    event DeliveredRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
+    /// @param creator Address of the creator.
+    /// @param requester Address of the requester.
+    /// @param amount Amount in the request.
+    /// @param index Index of the request in the creator's array of tokens.
+    /// @param tokenAddress address of the creator token contract
+    /// @param tokenId id of the of the NFT 
+    event DeliveredRequest(
+        address indexed creator, 
+        address indexed requester, 
+        uint256 amount, 
+        uint256 index,
+        address tokenAddress,
+        uint256 tokenId
+    );
 
     /// @notice Emitted when a request is refunded
-    event RefundedRequest(address indexed creator, address indexed requester, uint256 amount, uint256 index);
+    /// @param creator Address of the creator.
+    /// @param requester Address of the requester.
+    /// @param amount Amount in the request.
+    /// @param index Index of the request in the creator's array of tokens.
+    event RefundedRequest(
+        address indexed creator, 
+        address indexed requester, 
+        uint256 amount, 
+        uint256 index
+    );
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
@@ -119,6 +151,7 @@ contract CliptoExchange is ReentrancyGuard {
         require(!request.fulfilled, "Request already fulfilled");
 
         // Mint the token to the requester and mark the request as fulfilled.
+        uint256 tokenId = creators[msg.sender].tokenIdCounter();
         creators[msg.sender].safeMint(request.requester, tokenURI);
         request.fulfilled = true;
 
@@ -127,7 +160,14 @@ contract CliptoExchange is ReentrancyGuard {
         require(sent, "Delivery failed");
 
         // Emit the delivered request value.
-        emit DeliveredRequest(msg.sender, request.requester, request.amount, index);
+        emit DeliveredRequest(
+            msg.sender, 
+            request.requester, 
+            request.amount, 
+            index,
+            address(creators[msg.sender]),
+            tokenId
+        );
     }
 
     /// @notice Allows the requester to be refunded if the creator fails to deliver
