@@ -2,8 +2,6 @@
 
 clipto is a decentralized service that lets users hire creators to make personalized videos.
 
-## Contributing
-
 ### Contract Setup
  - [Install dapptools](https://github.com/dapphub/dapptools) / [on macOS ARM](https://roycewells.io/writing/dapptools-m1/)
  - nix-env is a prerequiste to dapptools so you may not need to install nix-env.
