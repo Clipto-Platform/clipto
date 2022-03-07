@@ -50,10 +50,12 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
     /// @param token Address of the CliptoToken contract.
-    event CreatorRegistered(address indexed creator, CliptoToken indexed token);
+    event CreatorRegistered(address indexed creator, CliptoToken indexed token, string data);
+
+    event CreatorUpdated(address indexed creator, string data);
 
     /// @notice Register a new creator
-    function registerCreator(string memory creatorName) external {
+    function registerCreator(string memory creatorName, string memory data) external {
         // Ensure that the creator has not been registered.
         require(address(creators[msg.sender]) == address(0), "Already registered");
 
@@ -63,9 +65,16 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         creators[msg.sender] = token;
 
         // Emit creator registration event.
-        emit CreatorRegistered(msg.sender, token);
+        emit CreatorRegistered(msg.sender, token, data);
     }
 
+
+    function updateCreator(string memory details) external {
+
+        require(address(creators[msg.sender]) != address(0),"User not a creator");
+
+        emit CreatorUpdated(msg.sender, details);
+    }
     /*///////////////////////////////////////////////////////////////
                                 REQUEST STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -92,7 +101,8 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         address indexed creator, 
         address indexed requester, 
         uint256 amount, 
-        uint256 index
+        uint256 index,
+        string data
     );
 
     /// @notice Emitted when a request is updated.
@@ -137,12 +147,12 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
-    function newRequest(address creator) external payable {
+    function newRequest(address creator, string memory data) external payable {
         // Push the request to the creator's request array.
         requests[creator].push(Request({requester: msg.sender, amount: msg.value, fulfilled: false}));
 
         // Emit new request event.
-        emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1);
+        emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1, data);
     }
 
     /// @notice Allows adding to the value of a request
