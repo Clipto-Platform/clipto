@@ -15,10 +15,24 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         exchange = new CliptoExchange(address(new CliptoToken()), feeDestination);
     }
 
+    function call_registerCreator(string memory name) public {
+        exchange.registerCreator(name,
+        '{"id":24,'
+        '"userName":"gabriel",'
+        '"address":"0x7c98C2DEc5038f00A2cbe8b7A64089f9c0b51991",'
+        '"twitterHandle":"gabriel",'
+        '"profilePicture":"https://pbs.twimg.com/profile_images/1486704746144559105/eGbftYY-_400x400.jpg",'
+        '"deliveryTime":3,'
+        '"demos":["https://twitter.com/sample/status/1486684530945581068"],'
+        '"bio":"here here",'
+        '"price":0.001'
+        );
+    }
+
     // Correctness test for registerCreator()
     function test_creatorRegistration() public {
         // Register creator.
-        exchange.registerCreator("Gabriel");
+        call_registerCreator("Gabriel");
 
         // Retrieve creator information.
         address token = address(exchange.creators(address(this)));
@@ -33,7 +47,11 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
         test_creatorRegistration();
 
         // Create a new request (the creator address is address(this))
-        exchange.newRequest{value: 1e18}(address(this));
+        exchange.newRequest{value: 1e18}(address(this),
+        '{"deadline": 3,'
+        '"description": "short description for the creator"'
+        '}'
+        );
 
         // Check that the request was created
         (address requester, uint256 value, bool fulfilled) = exchange.requests(address(this), 0);
@@ -126,8 +144,8 @@ contract CliptoExchangeTest is DSTestPlus, IERC721Receiver {
 
     // Check if multiple registration is not possible
     function testFail_multipleRegister() public {
-        exchange.registerCreator("Gabriel");
-        exchange.registerCreator("Gabriel");
+        call_registerCreator("Gabriel");
+        call_registerCreator("Gabriel");
     }
 
     // Check if delivery is not possible from unknown indices
