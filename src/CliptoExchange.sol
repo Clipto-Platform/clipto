@@ -3,8 +3,9 @@ pragma solidity 0.8.10;
 
 import {CliptoToken} from "./CliptoToken.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {ReentrancyGuard} from "lib/solmate/src/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "../lib/solmate/src/utils/ReentrancyGuard.sol";
 import {Ownable2} from "./utils/Ownable2.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @title Clipto Exchange
 /// @author Clipto
@@ -90,6 +91,8 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         uint256 amount;
         /// @dev Boolean where false = not yet started and true = fulfilled or refunded.
         bool fulfilled;
+
+        address token;
     }
 
     /// @notice Emitted when a new request is created.
@@ -102,7 +105,8 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         address indexed requester, 
         uint256 amount, 
         uint256 index,
-        string data
+        string data,
+        address token
     );
 
     /// @notice Emitted when a request is updated.
@@ -147,12 +151,34 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
     /// @notice Create a new request.
     /// @dev The request's "amount" value is the callvalue
-    function newRequest(address creator, string memory data) external payable {
+    function newRequest(address creator, string memory data, address token, uint256 amount) external {
         // Push the request to the creator's request array.
-        requests[creator].push(Request({requester: msg.sender, amount: msg.value, fulfilled: false}));
+
+        require(amount > 0, "amount should be greater than 0");
+
+        uint256 allowance = ERC20(token).allowance(msg.sender, address(this));
+        require(allowance >= amount, "Check the token allowance");
+
+        bool sent = ERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(sent,"transaction failed");
+
+        requests[creator].push(Request({requester: msg.sender, amount: amount, fulfilled: false, token: token}));
 
         // Emit new request event.
-        emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1, data);
+        emit NewRequest(creator, msg.sender, amount, requests[creator].length - 1, data, token);
+    }
+
+    function newRequestPayable(address creator, string memory data) external payable {
+        // Push the request to the creator's request array.
+            requests[creator].push(Request({
+            requester: msg.sender, 
+            amount: msg.value, 
+            fulfilled: false, 
+            token: address(0)}
+        ));
+
+        // Emit new request event.
+        emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1, data,address(0));
     }
 
     /// @notice Allows adding to the value of a request
@@ -184,15 +210,26 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         request.fulfilled = true;
 
         // Take exchange fee if fee > 0 
+        bool sent;
         uint256 feeAmount = (request.amount * feeRate) / scale;
-        (bool sent, ) = owner.call{value: feeAmount}("");
+        if(address(request.token) != address(0)){
+            sent = ERC20(request.token).transferFrom(address(this) , owner, feeAmount);
+        }
+        else{
+            (sent, ) =  owner.call{value: feeAmount}("");
+        }
         require(sent, "Fee delivery failed");
 
         // Remove exchange fee from the original request amount
         uint256 paymentAmount = request.amount - feeAmount;
 
         // Ensure the transfer is successful.
-        (sent, ) = msg.sender.call{value: paymentAmount}("");
+         if(address(request.token) != address(0)){
+            sent = ERC20(request.token).transferFrom(address(this) , msg.sender, paymentAmount);
+         }
+         else{
+            (sent, ) = msg.sender.call{value: paymentAmount}("");
+         }
         require(sent, "Request delivery failed");
 
         // Emit the delivered request value.
@@ -217,7 +254,13 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
         // Refund the request.
         request.fulfilled = true;
-        (bool sent, ) = request.requester.call{value: requests[creator][index].amount}("");
+        bool sent;
+        if(address(request.token) != address(0)){
+            sent= ERC20(request.token).transferFrom(address(this) ,request.requester, request.amount);
+        }
+        else{
+            (sent, ) = request.requester.call{value: requests[creator][index].amount}("");
+        }
         require(sent, "Delivery failed");
 
         // Emit the refunded request value.
