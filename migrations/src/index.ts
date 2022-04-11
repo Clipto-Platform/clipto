@@ -29,13 +29,12 @@ const migrate = async () => {
   );
 
   let receipt = await transaction.wait();
-  console.log(receipt);
   console.log(`Migration of creators complete.`);
 
   // request migrations
   const requestArgs = await getRequestArgs(config);
   console.log(`Migrating ${requestArgs.requesterAddresses.length} requests ...`);
-   transaction = await contract.migrateRequest(
+  transaction = await contract.migrateRequest(
     requestArgs.creatorAddresses,
     requestArgs.requesterAddresses,
     requestArgs.amount,
@@ -43,7 +42,7 @@ const migrate = async () => {
     requestArgs.jsonData,
   );
 
-   receipt = await transaction.wait();
+  receipt = await transaction.wait();
   console.log(`Migration of requests complete.`);
 };
 
