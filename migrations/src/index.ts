@@ -20,36 +20,31 @@ const migrate = async () => {
   const contract = intializeContract(config);
 
   // creator migrations
-  // const creatorArgs = await getCreatorArgs(config);
-  // console.log(`Migrating ${creatorArgs.creatorAddresses.length} creators ...`);
-  // let transaction = await contract.migrateCreator(
-  //   creatorArgs.creatorAddresses,
-  //   creatorArgs.tokenAddresses,
-  //   creatorArgs.jsonData,
-  // );
+  const creatorArgs = await getCreatorArgs(config);
+  console.log(`Migrating ${creatorArgs.creatorAddresses.length} creators ...`);
+  let transaction = await contract.migrateCreator(
+    creatorArgs.creatorAddresses,
+    creatorArgs.tokenAddresses,
+    creatorArgs.jsonData,
+  );
 
-  // let receipt = await transaction.wait();
-  // console.log(`Migration of creators complete.`);
+  let receipt = await transaction.wait();
+  console.log(receipt);
+  console.log(`Migration of creators complete.`);
 
   // request migrations
-  // const requestArgs = await getRequestArgs(config);
-  // console.log(`Migrating ${requestArgs.requesterAddresses.length} requests ...`);
-  // let transaction = await contract.migrateRequest(
-  //   requestArgs.creatorAddresses,
-  //   requestArgs.requesterAddresses,
-  //   requestArgs.amount,
-  //   requestArgs.fulfilled,
-  //   requestArgs.jsonData,
-  // );
+  const requestArgs = await getRequestArgs(config);
+  console.log(`Migrating ${requestArgs.requesterAddresses.length} requests ...`);
+   transaction = await contract.migrateRequest(
+    requestArgs.creatorAddresses,
+    requestArgs.requesterAddresses,
+    requestArgs.amount,
+    requestArgs.fulfilled,
+    requestArgs.jsonData,
+  );
 
-  // let receipt = await transaction.wait();
-  // console.log(`Migration of requests complete.`);
+   receipt = await transaction.wait();
+  console.log(`Migration of requests complete.`);
 };
 
-// migrate().catch((err) => console.log(err));
-
-const verify = async () => {
-  
-}
-
-verify().catch(err => console.log(err)); 
+migrate().catch((err) => console.log(err));
