@@ -46,7 +46,7 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
     //////////////////////////////////////////////////////////////*/
 
     /// @dev Maps creator address to their CliptoToken contract.
-    mapping(address => CliptoToken) public creators;
+    mapping(address => address) public creators;
 
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
@@ -61,9 +61,10 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         require(address(creators[msg.sender]) == address(0), "Already registered");
 
         // Deploy a new CliptoToken contract for the creator.
-        CliptoToken token = CliptoToken(Clones.clone(TOKEN_IMPLEMENTATION));
+        address tokenAddress = Clones.clone(TOKEN_IMPLEMENTATION);
+        CliptoToken token = CliptoToken(tokenAddress);
         token.initialize(creatorName);
-        creators[msg.sender] = token;
+        creators[msg.sender] = tokenAddress;
 
         // Emit creator registration event.
         emit CreatorRegistered(msg.sender, token, data);
@@ -170,12 +171,12 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
     function newRequestPayable(address creator, string memory data) external payable {
         // Push the request to the creator's request array.
-            requests[creator].push(Request({
+        requests[creator].push(Request({
             requester: msg.sender, 
             amount: msg.value, 
             fulfilled: false, 
-            token: address(0)}
-        ));
+            token: address(0)
+        }));
 
         // Emit new request event.
         emit NewRequest(creator, msg.sender, msg.value, requests[creator].length - 1, data,address(0));
@@ -204,9 +205,10 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         // Ensure that the request has not been fulfilled.
         require(!request.fulfilled, "Request already fulfilled");
 
+        CliptoToken token = CliptoToken(creators[msg.sender]);
         // Mint the token to the requester and mark the request as fulfilled.
-        uint256 tokenId = creators[msg.sender].tokenIdCounter();
-        creators[msg.sender].safeMint(request.requester, tokenURI);
+        uint256 tokenId = token.tokenIdCounter();
+        token.safeMint(request.requester, tokenURI);
         request.fulfilled = true;
 
         // Take exchange fee if fee > 0 
@@ -265,5 +267,60 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
         // Emit the refunded request value.
         emit RefundedRequest(creator, request.requester, request.amount, index);
+    }
+
+    event MigrationCreator(
+        address [] creatorAddress,
+        address [] tokenAddress,
+        string  [] jsonData
+    );
+    function migrateCreator(
+        address [] calldata creatorsAddress,    // all addresses of creator
+        address [] calldata tokensAddress,      // all nft tokens of creator 
+        string  [] calldata jsonData            // all extra json of creator
+    )
+    public onlyOwner                           // allows only owner to call     
+    {
+    // loop through the array
+        for(uint i = 0; i < creatorsAddress.length; i++) {
+            // update mappings
+            creators[creatorsAddress[i]] = tokensAddress[i] ;
+
+    }
+        emit MigrationCreator(creatorsAddress, tokensAddress, jsonData);
+    }
+
+    event MigrationRequests(
+        address [] creatorAddress,
+        address [] requesterAddress,
+        uint256 [] amount,              
+        bool    [] fulfilled,           
+        string  [] jsonData
+    );
+
+    function migrateRequest(
+        address [] calldata creatorsAddress,     // all addresses of creator
+        address [] calldata requesterAddress,    // all addresses of the requester
+        uint256 [] calldata amount,              // all amounts of the requests
+        bool    [] calldata fulfilled,           // all statuses of the requests
+        string  [] calldata jsonData            // extra json data of the requests
+    )
+    public
+    onlyOwner       // only owner has the access to call this function
+    {
+        for(uint i = 0; i < creatorsAddress.length; i++) {
+            Request memory request = Request({
+                requester : requesterAddress[i],
+                amount : amount[i],
+                fulfilled : fulfilled[i],
+                token : address(0)
+            });
+
+            requests[creatorsAddress[i]].push(request);
+
+        }
+
+        // or could emit all data at once and index and parse in the subgraph
+        emit MigrationRequests(creatorsAddress, requesterAddress, amount, fulfilled, jsonData);
     }
 }
