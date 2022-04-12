@@ -51,9 +51,20 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
     /// @notice Emitted when a new creator is registered.
     /// @param creator Address of the creator.
     /// @param token Address of the CliptoToken contract.
-    event CreatorRegistered(address indexed creator, CliptoToken indexed token, string data);
+    /// @param data json data for profile
+    event CreatorRegistered(
+        address indexed creator, 
+        CliptoToken indexed token, 
+        string data
+    );
 
-    event CreatorUpdated(address indexed creator, string data);
+    /// @notice Emitted when creator updates his profile.
+    /// @param creator Address of the creator.
+    /// @param data json data for profile
+    event CreatorUpdated(
+        address indexed creator,
+        string data
+    );
 
     /// @notice Register a new creator
     function registerCreator(string memory creatorName, string memory data) external {
@@ -71,12 +82,15 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
     }
 
 
+    /// @notice Register a new creator
+    /// @param details: json data representing values updated
     function updateCreator(string memory details) external {
-
+        // check if the creator exists
         require(address(creators[msg.sender]) != address(0),"User not a creator");
 
         emit CreatorUpdated(msg.sender, details);
     }
+
     /*///////////////////////////////////////////////////////////////
                                 REQUEST STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -151,10 +165,9 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
     );
 
     /// @notice Create a new request.
-    /// @dev The request's "amount" value is the callvalue
+    /// @dev The request's "amount" value is the function argument
     function newRequest(address creator, string memory data, address token, uint256 amount) external {
-        // Push the request to the creator's request array.
-
+        // check if amount is greater than 0
         require(amount > 0, "amount should be greater than 0");
 
         uint256 allowance = ERC20(token).allowance(msg.sender, address(this));
@@ -163,12 +176,20 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         bool sent = ERC20(token).transferFrom(msg.sender, address(this), amount);
         require(sent,"transaction failed");
 
-        requests[creator].push(Request({requester: msg.sender, amount: amount, fulfilled: false, token: token}));
+        // Push the request to the creator's request array.
+        requests[creator].push(Request({
+            requester: msg.sender,
+            amount: amount,
+            fulfilled: false, 
+            token: token
+        }));
 
         // Emit new request event.
         emit NewRequest(creator, msg.sender, amount, requests[creator].length - 1, data, token);
     }
 
+    /// @notice Create a new request.
+    /// @dev The request's "amount" value is the callvalue
     function newRequestPayable(address creator, string memory data) external payable {
         // Push the request to the creator's request array.
         requests[creator].push(Request({
@@ -214,9 +235,13 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         // Take exchange fee if fee > 0 
         bool sent;
         uint256 feeAmount = (request.amount * feeRate) / scale;
+
+        // if the request was made by token other than native(MATIC)
         if(address(request.token) != address(0)){
             sent = ERC20(request.token).transferFrom(address(this) , owner, feeAmount);
         }
+
+        // request made by native token
         else{
             (sent, ) =  owner.call{value: feeAmount}("");
         }
@@ -225,10 +250,12 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         // Remove exchange fee from the original request amount
         uint256 paymentAmount = request.amount - feeAmount;
 
-        // Ensure the transfer is successful.
+        // if the request was made by token other than native(MATIC)
          if(address(request.token) != address(0)){
             sent = ERC20(request.token).transferFrom(address(this) , msg.sender, paymentAmount);
          }
+
+        // request made by native token
          else{
             (sent, ) = msg.sender.call{value: paymentAmount}("");
          }
@@ -256,46 +283,61 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
         // Refund the request.
         request.fulfilled = true;
+
         bool sent;
+
+        // if the request was made by token other than native(MATIC)
         if(address(request.token) != address(0)){
             sent= ERC20(request.token).transferFrom(address(this) ,request.requester, request.amount);
         }
+
+        // request made by native token
         else{
             (sent, ) = request.requester.call{value: requests[creator][index].amount}("");
         }
+
         require(sent, "Delivery failed");
 
         // Emit the refunded request value.
         emit RefundedRequest(creator, request.requester, request.amount, index);
     }
 
+    /*///////////////////////////////////////////////////////////////
+                                MIGRATIONS
+    //////////////////////////////////////////////////////////////*/
+
     event MigrationCreator(
-        address [] creatorAddress,
-        address [] tokenAddress,
-        string  [] jsonData
+        address [] creatorAddress,              // all addresses of creator
+        address [] tokenAddress,                // all addresses of creator's nft contract
+        string  [] jsonData                     // all extra json data
     );
+    
     function migrateCreator(
         address [] calldata creatorsAddress,    // all addresses of creator
         address [] calldata tokensAddress,      // all nft tokens of creator 
         string  [] calldata jsonData            // all extra json of creator
     )
-    public onlyOwner                           // allows only owner to call     
+    public onlyOwner        
     {
-    // loop through the array
-        for(uint i = 0; i < creatorsAddress.length; i++) {
+        // making sure data exists
+        require(creatorsAddress.length > 0, "No creators added");
+
+        uint i;
+        for(i = 0; i < creatorsAddress.length; i++) {
             // update mappings
             creators[creatorsAddress[i]] = tokensAddress[i] ;
+        }
 
-    }
         emit MigrationCreator(creatorsAddress, tokensAddress, jsonData);
     }
 
     event MigrationRequests(
-        address [] creatorAddress,
-        address [] requesterAddress,
-        uint256 [] amount,              
-        bool    [] fulfilled,           
-        string  [] jsonData
+        address [] creatorAddress,               // all addresses of creator
+        address [] requesterAddress,             // all addresses of the requester   
+        uint256 [] amount,                       // all amounts of the requests
+        bool    [] fulfilled,                    // all statuses of the requests
+        uint256 [] requestIds,                   // all request ids, indexes 
+        string  [] jsonData                      // extra json data of the requests 
     );
 
     function migrateRequest(
@@ -303,12 +345,19 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         address [] calldata requesterAddress,    // all addresses of the requester
         uint256 [] calldata amount,              // all amounts of the requests
         bool    [] calldata fulfilled,           // all statuses of the requests
-        string  [] calldata jsonData            // extra json data of the requests
+        string  [] calldata jsonData             // extra json data of the requests
     )
     public
-    onlyOwner       // only owner has the access to call this function
+    onlyOwner       
     {
-        for(uint i = 0; i < creatorsAddress.length; i++) {
+        // making sure data exists
+        require(creatorsAddress.length > 0, "No creators added");
+
+        uint256 [] memory requestIds = new uint256[](creatorsAddress.length);
+        uint256 i;
+
+        for(i = 0; i < creatorsAddress.length; i++) {
+            // creating request struct
             Request memory request = Request({
                 requester : requesterAddress[i],
                 amount : amount[i],
@@ -316,11 +365,19 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
                 token : address(0)
             });
 
+            // adding to the requests mapping
             requests[creatorsAddress[i]].push(request);
-
+            requestIds[i] = requests[creatorsAddress[i]].length - 1;
         }
 
-        // or could emit all data at once and index and parse in the subgraph
-        emit MigrationRequests(creatorsAddress, requesterAddress, amount, fulfilled, jsonData);
+        // single event for migration
+        emit MigrationRequests(
+            creatorsAddress, 
+            requesterAddress, 
+            amount, 
+            fulfilled, 
+            requestIds, 
+            jsonData
+        );
     }
 }

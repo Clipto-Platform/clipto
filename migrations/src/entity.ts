@@ -84,7 +84,6 @@ export const getRequestArgs = async (config: Config): Promise<MigrateRequestArgs
     fulfilled.push(request.delivered);
     jsonData.push(
       JSON.stringify({
-        requestId: request.requestId,
         tokenId: request.tokenId,
         tokenUri: request.tokenUri,
         tokenAddress: request.tokenAddress,
