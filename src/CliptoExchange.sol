@@ -336,6 +336,7 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         address [] requesterAddress,             // all addresses of the requester   
         uint256 [] amount,                       // all amounts of the requests
         bool    [] fulfilled,                    // all statuses of the requests
+        uint256 [] requestIds,                   // all request ids, indexes 
         string  [] jsonData                      // extra json data of the requests 
     );
 
@@ -352,7 +353,9 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
         // making sure data exists
         require(creatorsAddress.length > 0, "No creators added");
 
-        uint i;
+        uint256 [] memory requestIds = new uint256[](creatorsAddress.length);
+        uint256 i;
+
         for(i = 0; i < creatorsAddress.length; i++) {
             // creating request struct
             Request memory request = Request({
@@ -364,9 +367,17 @@ contract CliptoExchange is ReentrancyGuard, Ownable2 {
 
             // adding to the requests mapping
             requests[creatorsAddress[i]].push(request);
+            requestIds[i] = requests[creatorsAddress[i]].length - 1;
         }
 
         // single event for migration
-        emit MigrationRequests(creatorsAddress, requesterAddress, amount, fulfilled, jsonData);
+        emit MigrationRequests(
+            creatorsAddress, 
+            requesterAddress, 
+            amount, 
+            fulfilled, 
+            requestIds, 
+            jsonData
+        );
     }
 }
