@@ -1,0 +1,35 @@
+echo "PRECOMMIT: running pre commit hook"
+
+# function to check error on command
+function check_error() {
+    EXIT="$?"
+
+    if [[ "$EXIT" == 0 ]]; then
+        return 1
+    else
+        echo "ERROR: " $1
+        exit 1
+    fi
+}
+
+STAGED_FILES=($(git diff --name-only --diff-filter=ACD))
+
+npm run compile
+check_error "error running compile"
+
+npm run test
+check_error "error running test"
+
+npm run lint:fix
+check_error "error running lint fix"
+
+npm run pretty
+check_error "error running prettier"
+
+# adding modified files
+git diff --name-only --diff-filter=M | xargs git add
+# adding previously staged files
+git add $STAGED_FILES
+check_error "error running git add"
+
+echo "PRECOMMIT: pre commit success"

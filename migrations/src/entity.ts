@@ -5,7 +5,7 @@ import {
   MigrateCreatorArgs,
   MigrateRequestArgs,
   Request,
-  ResponseRequest,
+  ResponseRequest
 } from "./types";
 
 export const allCreators = async (config: Config): Promise<Creator[]> => {
@@ -81,7 +81,7 @@ export const getRequestArgs = async (config: Config): Promise<MigrateRequestArgs
     creatorAddresses.push(request.creator.toLowerCase());
     requesterAddresses.push(request.requester.toLowerCase());
     amount.push(request.amount);
-    fulfilled.push(request.delivered);
+    fulfilled.push(request.delivered || request.refunded);
     jsonData.push(
       JSON.stringify({
         tokenId: request.tokenId,
