@@ -9,8 +9,7 @@ dotenv.config();
 
 async function main() {
   const feeDestination =
-    process.env.FEE_DESTINATION_ADDRESS ||
-    "0x7c98C2DEc5038f00A2cbe8b7A64089f9c0b51991";
+    process.env.FEE_DESTINATION_ADDRESS || "0x7c98C2DEc5038f00A2cbe8b7A64089f9c0b51991";
 
   const CliptoToken = await ethers.getContractFactory("CliptoToken");
   const CliptoExchange = await ethers.getContractFactory("CliptoExchange");
@@ -19,10 +18,7 @@ async function main() {
   await cliptoToken.deployed();
   const cliptoTokenAddress = cliptoToken.address;
 
-  const cliptoExchange = await CliptoExchange.deploy(
-    cliptoTokenAddress,
-    feeDestination
-  );
+  const cliptoExchange = await CliptoExchange.deploy(cliptoTokenAddress, feeDestination);
   await cliptoExchange.deployed();
   const cliptoExchangeAddresss = cliptoExchange.address;
 

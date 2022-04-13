@@ -42,3 +42,9 @@ npm run deploy:testnet
 # to view all available commands
 npm run
 ```
+
+- To setup git pre-commit hook
+
+```
+npm run hooks
+```

@@ -16,6 +16,7 @@
     "verify:testnet": "npx hardhat verify --network testnet $DEPLOYED_CONTRACT_ADDRESS",
     "lint": "npx eslint '**/*.{js,ts}'",
     "lint:fix": "npx eslint '**/*.{js,ts}' --fix",
+    "hooks": "chmod +x .githooks/* && git config core.hooksPath .githooks && echo done",
     "pretty": "npx prettier '**/*.{json,sol,md}' --write"
   },
   "author": "AP-Atul",
