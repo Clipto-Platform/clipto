@@ -7,19 +7,12 @@ import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC2981, IERC165} from "./interfaces/IERC2981.sol";
-import {IERC4494} from "./interfaces/IERC4494.sol";
+import {IERC2981, IERC165} from "../interfaces/IERC2981.sol";
+import {IERC4494} from "../interfaces/IERC4494.sol";
 
-contract CliptoToken is
-    ERC721("", ""),
-    ERC721Enumerable,
-    ERC721URIStorage,
-    IERC2981,
-    IERC4494
-{
+contract CliptoToken is ERC721("", ""), ERC721Enumerable, ERC721URIStorage, IERC2981, IERC4494 {
     /// @dev Value is equal to keccak256("Permit(address spender,uint256 tokenId,uint256 nonce,uint256 deadline)");
-    bytes32 public constant PERMIT_TYPEHASH =
-        0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
+    bytes32 public constant PERMIT_TYPEHASH = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad;
     bytes32 internal nameHash;
     bytes32 internal versionHash;
     mapping(uint256 => uint256) private _nonces;
@@ -65,11 +58,7 @@ contract CliptoToken is
         return "https://clipto.io/contract-metadata.json";
     }
 
-    function royaltyInfo(uint256 tokenId, uint256 salePrice)
-        external
-        view
-        returns (address, uint256)
-    {
+    function royaltyInfo(uint256 tokenId, uint256 salePrice) external view returns (address, uint256) {
         // salePrice * royaltyRate will overflow as salePrice approaches uint256
         // but this is impossible as MATIC or AVAX tokens in circulation is < uint156
         tokenId;
@@ -102,12 +91,7 @@ contract CliptoToken is
         super._burn(tokenId);
     }
 
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
 
@@ -167,9 +151,7 @@ contract CliptoToken is
         return
             keccak256(
                 abi.encode(
-                    keccak256(
-                        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                    ),
+                    keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
                     nameHash,
                     versionHash,
                     block.chainid,
@@ -188,9 +170,7 @@ contract CliptoToken is
 
         bytes32 digest = ECDSA.toTypedDataHash(
             DOMAIN_SEPARATOR(),
-            keccak256(
-                abi.encode(PERMIT_TYPEHASH, spender, tokenId, _nonces[tokenId], deadline)
-            )
+            keccak256(abi.encode(PERMIT_TYPEHASH, spender, tokenId, _nonces[tokenId], deadline))
         );
 
         (address recoveredAddress, ) = ECDSA.tryRecover(digest, sig);

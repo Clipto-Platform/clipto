@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.10;
 
-abstract contract Ownable2 {
+abstract contract Ownable {
     address public owner;
 
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
@@ -19,7 +19,7 @@ abstract contract Ownable2 {
      * @dev Modifier that throws if not called by owner
      */
     modifier onlyOwner() {
-        require(owner == msg.sender, "Not owner");
+        require(owner == msg.sender, "not the owner");
         _;
     }
 
