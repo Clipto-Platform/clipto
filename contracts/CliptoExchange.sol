@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0 License
 pragma solidity ^0.8.10;
 
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/ICliptoToken.sol";
-import "./utils/ReentrancyGuard.sol";
 import "./CliptoExchangeStorage.sol";
 
-contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
-    bool private _intialized;
-
+contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuardUpgradeable {
     uint256 private _feeNumer;
     uint256 private _feeDenom;
 
@@ -30,14 +29,12 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
     event MigrationCreator(address[] creators);
     event MigrationRequest(address[] creators, uint256[] requestIds);
 
-    function intialize(address _owner, address _cliptoToken) public {
-        require(!_intialized, "error: pre intialized contract");
+    function initialize(address _owner, address _cliptoToken) public initializer {
+        __ReentrancyGuard_init();
 
         owner = _owner;
         _feeDenom = 1;
         CLIPTO_TOKEN_ADDRESS = _cliptoToken;
-
-        _intialized = true;
     }
 
     function getRequest(address _creator, uint256 _requestId) public view returns (Request memory) {
@@ -50,6 +47,11 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
 
     function getFeeRate() public view returns (uint256, uint256) {
         return (_feeNumer, _feeDenom);
+    }
+
+    function updateCliptoTokenImplementation(address _newImplementation) public onlyOwner {
+        require(_newImplementation != address(0), "not a valid implementation");
+        CLIPTO_TOKEN_ADDRESS = _newImplementation;
     }
 
     function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) public onlyOwner {
@@ -118,7 +120,7 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
         require(!request.fulfilled, "error: request already fulfilled/refunded");
 
         uint256 feeAmount = (request.amount * _feeNumer) / _feeDenom;
-        _transferPayment(msg.sender, request.erc20, feeAmount);
+        _transferPayment(owner, request.erc20, feeAmount);
 
         uint256 paymentAmount = request.amount - feeAmount;
         _transferPayment(msg.sender, request.erc20, paymentAmount);
@@ -133,6 +135,7 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
 
     function refundRequest(address _creator, uint256 _requestId) external nonReentrant {
         Request storage request = requests[_creator][_requestId];
+        require(request.requester == msg.sender, "error: only requester can make a refund");
         require(!request.fulfilled, "error: request already fulfilled/refunded");
 
         _transferPayment(msg.sender, request.erc20, request.amount);
@@ -141,12 +144,16 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
         emit RefundedRequest(_creator, _requestId);
     }
 
-    function migrateCreator(address[] calldata _creatorAddress, string[] calldata _metadataURIs) public onlyOwner {
+    function migrateCreator(
+        address[] calldata _creatorAddress,
+        string[] calldata _creatorNames,
+        string[] calldata _metadataURIs
+    ) public onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256 i;
         for (i = 0; i < _creatorAddress.length; i++) {
-            address nft = Clones.clone(CLIPTO_TOKEN_ADDRESS);
+            address nft = _deployCliptoFor(_creatorNames[i]);
             creators[_creatorAddress[i]] = Creator(nft, _metadataURIs[i]);
         }
 
@@ -224,7 +231,7 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
 
     function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
         address nftAddress = Clones.clone(CLIPTO_TOKEN_ADDRESS);
-        ICliptoToken(nftAddress).initialize(owner, _creatorName);
+        ICliptoToken(nftAddress).initialize(address(this), _creatorName);
         return nftAddress;
     }
 
@@ -242,14 +249,19 @@ contract CliptoExchange is CliptoExchangeStorage, ReentrancyGuard {
         address _to,
         address _erc20,
         uint256 _amount
-    ) internal nonReentrant {
-        bool sent = IERC20(_erc20).transferFrom(_from, _to, _amount);
+    ) internal {
+        bool sent;
+        if (_from == address(this)) {
+            sent = IERC20(_erc20).transfer(_to, _amount);
+        } else {
+            sent = IERC20(_erc20).transferFrom(_from, _to, _amount);
+        }
         require(sent, "error: payment transfer failed");
 
         emit Payment(_to, _erc20, _amount);
     }
 
-    function _pay(address _to, uint256 _amount) internal nonReentrant {
+    function _pay(address _to, uint256 _amount) internal {
         (bool sent, ) = _to.call{value: _amount}("");
         require(sent, "error: payment transfer failed");
 

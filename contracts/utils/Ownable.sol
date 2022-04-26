@@ -10,7 +10,7 @@ abstract contract Ownable {
     /**
      * @dev Constructor to set owner
      */
-    constructor(address _owner) {
+    function __Ownable_init(address _owner) internal {
         owner = _owner;
         emit OwnershipTransferred(address(0), owner);
     }

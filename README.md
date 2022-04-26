@@ -48,3 +48,18 @@ npm run
 ```
 npm run hooks
 ```
+
+## Deployments
+
+### Mumbai
+
+```
+CliptoExchange : 0x1E425016eb93ec7a3811Cca76a64A80B0129AEdb
+CliptoToken    : 0xF6505f3D0C5998b13b48B9f4bDB28df71916779e
+```
+
+### Polygon
+
+```
+
+```

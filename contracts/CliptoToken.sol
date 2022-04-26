@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0 License
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "./CliptoTokenStorage.sol";
 import "./interfaces/IERC2981.sol";
-import "./utils/Ownable.sol";
 
-contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
+contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IERC2981 {
     using Counters for Counters.Counter;
-    bool private _initialized;
     string private _name;
     mapping(uint256 => string) private _tokenURIs;
     Counters.Counter private _currentTokenId;
@@ -22,25 +21,24 @@ contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
 
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    function initialize(address _owner, string memory _creatorName) public {
-        require(!_initialized, "error: pre initialized contract");
+    function initialize(address _owner, string memory _creatorName) public initializer {
+        ERC721Upgradeable.__ERC721_init(string(abi.encodePacked("Clipto Creator - ", _creatorName)), "CTO");
 
         _currentTokenId.increment();
 
         owner = _owner;
-        _name = _creatorName;
-
         royaltyNumer = 5;
         royaltyDenom = 100;
-        _initialized = true;
     }
 
-    function name() public view override returns (string memory) {
-        return _name;
-    }
-
-    function symbol() public pure override returns (string memory) {
-        return "CTO";
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable, IERC165)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 
     function totalSupply() public view returns (uint256) {
@@ -57,7 +55,7 @@ contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
         return (owner, royaltyAmount);
     }
 
-    function tokenURI(uint256 _tokenId) public view override(ERC721) returns (string memory) {
+    function tokenURI(uint256 _tokenId) public view override(ERC721Upgradeable) returns (string memory) {
         require(_exists(_tokenId), "error: uri query of nonexistent token");
         return _tokenURIs[_tokenId];
     }
@@ -79,7 +77,7 @@ contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
 
     function burn(uint256 _tokenId) public {
         require(_exists(_tokenId), "error: burn on nonexistent token");
-        require(ERC721.ownerOf(_tokenId) == _msgSender(), "error: only owner can call burn");
+        require(ownerOf(_tokenId) == _msgSender(), "error: only owner can call burn");
         _burn(_tokenId);
     }
 
@@ -94,7 +92,7 @@ contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
         _tokenURIs[_tokenId] = _tokenURI;
     }
 
-    function _burn(uint256 _tokenId) internal override(ERC721) {
+    function _burn(uint256 _tokenId) internal override(ERC721Upgradeable) {
         super._burn(_tokenId);
         if (bytes(_tokenURIs[_tokenId]).length != 0) {
             delete _tokenURIs[_tokenId];

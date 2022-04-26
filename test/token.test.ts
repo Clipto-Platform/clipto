@@ -25,7 +25,7 @@ describe("CliptoToken", () => {
   it("should return all readable data accurately", async () => {
     const totalSupply = await cliptoToken.totalSupply();
     expect(totalSupply.toNumber()).to.eql(0);
-    expect(await cliptoToken.name()).to.eql("creator");
+    expect(await cliptoToken.name()).to.eql("Clipto Creator - creator");
     expect(await cliptoToken.symbol()).to.eql("CTO");
     expect(await cliptoToken.contractURI()).to.eql(
       "https://clipto.io/contract-metadata.json"
