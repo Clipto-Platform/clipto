@@ -2,19 +2,19 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
-import { CliptoTokenV2 } from "../typechain";
+import { CliptoToken } from "../typechain";
 
 describe("CliptoToken", () => {
   let account: SignerWithAddress;
   let dummy: SignerWithAddress;
-  let cliptoToken: CliptoTokenV2;
+  let cliptoToken: CliptoToken;
 
   beforeEach(async () => {
     const accounts = await ethers.getSigners();
     account = accounts[0];
     dummy = accounts[1];
 
-    const CliptoToken = await ethers.getContractFactory("CliptoTokenV2");
+    const CliptoToken = await ethers.getContractFactory("CliptoToken");
     cliptoToken = await CliptoToken.deploy();
     await cliptoToken.deployed();
 

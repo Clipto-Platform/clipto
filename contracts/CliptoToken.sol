@@ -4,21 +4,16 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
+import "./CliptoTokenStorage.sol";
 import "./interfaces/IERC2981.sol";
 import "./utils/Ownable.sol";
 
-contract CliptoTokenV2 is ERC721("", ""), IERC2981 {
+contract CliptoToken is CliptoTokenStorage, ERC721("", ""), IERC2981 {
     using Counters for Counters.Counter;
-
-    mapping(uint256 => string) private _tokenURIs;
-
-    Counters.Counter private _currentTokenId;
     bool private _initialized;
     string private _name;
-
-    uint256 public royaltyNumer;
-    uint256 public royaltyDenom;
-    address public owner;
+    mapping(uint256 => string) private _tokenURIs;
+    Counters.Counter private _currentTokenId;
 
     modifier onlyOwner() {
         require(owner == msg.sender, "not the owner");
@@ -68,7 +63,8 @@ contract CliptoTokenV2 is ERC721("", ""), IERC2981 {
     }
 
     function setRoyaltyRate(uint256 _royaltyNumer, uint256 _royaltyDenom) public onlyOwner {
-        require(royaltyDenom >= 1, "error: denominator should be non zero");
+        require(_royaltyDenom != 0, "error: denom should be non zero");
+        require(_royaltyDenom >= _royaltyNumer, "error: donom should be greater than numer");
         royaltyNumer = _royaltyNumer;
         royaltyDenom = _royaltyDenom;
     }
