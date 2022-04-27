@@ -40,6 +40,15 @@ describe("CliptoExchange", () => {
     await tx.wait();
   });
 
+  it("should pause when owner takes action", async () => {
+    expect(await cliptoExchange.paused()).to.eql(false);
+
+    const tx = await cliptoExchange.pause();
+    await tx.wait();
+
+    expect(await cliptoExchange.paused()).to.eql(true);
+  });
+
   it("should return values for all readable functions", async () => {
     expect(await cliptoExchange.owner()).to.eql(account.address);
     expect(await cliptoExchange.CLIPTO_TOKEN_ADDRESS()).to.eql(cliptoToken.address);
@@ -62,6 +71,8 @@ describe("CliptoExchange", () => {
     const token = await ethers.getContractAt("CliptoToken", creator.nft);
     expect(await token.symbol()).to.eql("CTO");
     expect(await token.name()).to.eql("Clipto Creator - creator");
+    expect(await token.owner()).to.eql(account.address);
+    expect(await token.minter()).to.eql(cliptoExchange.address);
   });
 
   it("should create a new request", async () => {

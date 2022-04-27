@@ -18,7 +18,12 @@ describe("CliptoToken", () => {
     cliptoToken = await CliptoToken.deploy();
     await cliptoToken.deployed();
 
-    const tx = await cliptoToken.initialize(account.address, "creator");
+    const tx = await cliptoToken.initialize(
+      account.address,
+      account.address,
+      account.address,
+      "creator"
+    );
     await tx.wait();
   });
 
@@ -28,7 +33,7 @@ describe("CliptoToken", () => {
     expect(await cliptoToken.name()).to.eql("Clipto Creator - creator");
     expect(await cliptoToken.symbol()).to.eql("CTO");
     expect(await cliptoToken.contractURI()).to.eql(
-      "https://clipto.io/contract-metadata.json"
+      "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
     );
     expect(await cliptoToken.owner()).to.eql(account.address);
   });
@@ -88,13 +93,13 @@ describe("CliptoToken", () => {
 
     expect(await cliptoToken.owner()).to.eql(dummy.address);
 
-    tx = await cliptoToken.connect(dummy).safeMint(dummy.address, "https://google.com");
+    tx = await cliptoToken.connect(account).safeMint(dummy.address, "https://google.com");
     await tx.wait();
-    tx = await cliptoToken.connect(dummy).setRoyaltyRate(10, 100);
+    tx = await cliptoToken.connect(account).setRoyaltyRate(10, 100);
     await tx.wait();
 
     const royalty = await cliptoToken.royaltyInfo(1, 1000);
-    expect(royalty[0]).to.eql(dummy.address);
+    expect(royalty[0]).to.eql(account.address);
     expect(royalty[1].toNumber()).to.eql(100);
   });
 });
