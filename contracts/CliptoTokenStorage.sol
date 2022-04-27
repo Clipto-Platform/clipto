@@ -8,4 +8,8 @@ abstract contract CliptoTokenStorage {
     uint256 public royaltyDenom;
 
     address public owner;
+    address public minter;
+    address public feeRecipient;
+
+    string public contractMetadataURI;
 }

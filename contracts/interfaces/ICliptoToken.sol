@@ -2,7 +2,12 @@
 pragma solidity ^0.8.10;
 
 interface ICliptoToken {
-    function initialize(address _owner, string memory _creatorName) external;
+    function initialize(
+        address _owner,
+        address _minter,
+        address _feeRecipient,
+        string memory _creatorName
+    ) external;
 
     function name() external view returns (string memory);
 
@@ -23,4 +28,10 @@ interface ICliptoToken {
     function burn(uint256 _tokenId) external;
 
     function transferOwnership(address newOwner) external;
+
+    function setFeeRecipient(address _feeRecipient) external;
+
+    function setMinter(address _minter) external;
+
+    function setContractURI(string calldata _contractURI) external;
 }

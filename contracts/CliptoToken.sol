@@ -10,25 +10,36 @@ import "./interfaces/IERC2981.sol";
 
 contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IERC2981 {
     using Counters for Counters.Counter;
-    string private _name;
-    mapping(uint256 => string) private _tokenURIs;
+
     Counters.Counter private _currentTokenId;
 
-    modifier onlyOwner() {
-        require(owner == msg.sender, "not the owner");
+    mapping(uint256 => string) private _tokenURIs;
+
+    string private _name;
+
+    modifier onlyMinter() {
+        require(minter == msg.sender, "error: not the minter");
         _;
     }
 
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
 
-    function initialize(address _owner, string memory _creatorName) public initializer {
+    function initialize(
+        address _owner,
+        address _minter,
+        address _feeRecipient,
+        string memory _creatorName
+    ) public initializer {
         ERC721Upgradeable.__ERC721_init(string(abi.encodePacked("Clipto Creator - ", _creatorName)), "CTO");
 
         _currentTokenId.increment();
 
         owner = _owner;
+        minter = _minter;
+        feeRecipient = _feeRecipient;
         royaltyNumer = 5;
         royaltyDenom = 100;
+        contractMetadataURI = "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH";
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -45,14 +56,14 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IE
         return _currentTokenId.current() - 1;
     }
 
-    function contractURI() public pure returns (string memory) {
-        return "https://clipto.io/contract-metadata.json";
+    function contractURI() public view returns (string memory) {
+        return contractMetadataURI;
     }
 
     function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256) {
         require(_exists(_tokenId), "error: royalty info query of nonexistent token");
         uint256 royaltyAmount = (_salePrice * royaltyNumer) / royaltyDenom;
-        return (owner, royaltyAmount);
+        return (feeRecipient, royaltyAmount);
     }
 
     function tokenURI(uint256 _tokenId) public view override(ERC721Upgradeable) returns (string memory) {
@@ -60,14 +71,26 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IE
         return _tokenURIs[_tokenId];
     }
 
-    function setRoyaltyRate(uint256 _royaltyNumer, uint256 _royaltyDenom) public onlyOwner {
+    function setFeeRecipient(address _feeRecipient) external onlyMinter {
+        feeRecipient = _feeRecipient;
+    }
+
+    function setMinter(address _minter) external onlyMinter {
+        minter = _minter;
+    }
+
+    function setContractURI(string calldata _contractURI) external onlyMinter {
+        contractMetadataURI = _contractURI;
+    }
+
+    function setRoyaltyRate(uint256 _royaltyNumer, uint256 _royaltyDenom) external onlyMinter {
         require(_royaltyDenom != 0, "error: denom should be non zero");
-        require(_royaltyDenom >= _royaltyNumer, "error: donom should be greater than numer");
+        require(_royaltyDenom >= _royaltyNumer, "error: denom should be greater than numer");
         royaltyNumer = _royaltyNumer;
         royaltyDenom = _royaltyDenom;
     }
 
-    function safeMint(address to, string memory _tokenURI) public onlyOwner {
+    function safeMint(address to, string memory _tokenURI) external onlyMinter {
         uint256 tokenId = _currentTokenId.current();
         _currentTokenId.increment();
 
@@ -75,16 +98,17 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IE
         _setTokenURI(tokenId, _tokenURI);
     }
 
+    function transferOwnership(address newOwner) public {
+        require(owner == msg.sender, "error: not the owner");
+        address oldOwner = owner;
+        owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+
     function burn(uint256 _tokenId) public {
         require(_exists(_tokenId), "error: burn on nonexistent token");
         require(ownerOf(_tokenId) == _msgSender(), "error: only owner can call burn");
         _burn(_tokenId);
-    }
-
-    function transferOwnership(address newOwner) public virtual onlyOwner {
-        address oldOwner = owner;
-        owner = newOwner;
-        emit OwnershipTransferred(oldOwner, newOwner);
     }
 
     function _setTokenURI(uint256 _tokenId, string memory _tokenURI) internal {

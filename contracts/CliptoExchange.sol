@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ICliptoToken.sol";
 import "./CliptoExchangeStorage.sol";
 
-contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuardUpgradeable {
+contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 private _feeNumer;
     uint256 private _feeDenom;
 
@@ -25,12 +26,13 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
     event RequestUpdated(address indexed creator, uint256 updatedAmount);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
-    event Payment(address to, address erc20, uint256 amount);
     event MigrationCreator(address[] creators);
     event MigrationRequest(address[] creators, uint256[] requestIds);
 
     function initialize(address _owner, address _cliptoToken) public initializer {
         __ReentrancyGuard_init();
+        __Pausable_init();
+        ICliptoToken(_cliptoToken).initialize(_owner, address(this), _owner, "clipto");
 
         owner = _owner;
         _feeDenom = 1;
@@ -56,23 +58,42 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
 
     function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) public onlyOwner {
         require(feeDenom_ != 0, "error: denom should be non zero");
-        require(feeDenom_ >= feeNumer_, "error: donom should be greater than numer");
         _feeNumer = feeNumer_;
         _feeDenom = feeDenom_;
     }
 
-    function transferOwnership(address newOwner) public virtual onlyOwner {
+    function transferOwnership(address newOwner) public onlyOwner {
         address oldOwner = owner;
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 
-    function registerCreator(string calldata _creatorName, string calldata _metadataURI) external {
+    function setCliptoMinter(address _cliptoToken, address _minter) public onlyOwner {
+        ICliptoToken(_cliptoToken).setMinter(_minter);
+    }
+
+    function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) public onlyOwner {
+        ICliptoToken(_cliptoToken).setContractURI(_contractURI);
+    }
+
+    function setCliptoRoyaltyRate(
+        address _cliptoToken,
+        uint256 _royaltyNumer,
+        uint256 _royaltyDenom
+    ) public onlyOwner {
+        ICliptoToken(_cliptoToken).setRoyaltyRate(_royaltyNumer, _royaltyDenom);
+    }
+
+    function setCliptoFeeRecipient(address _cliptoToken, address _feeRecipient) public onlyOwner {
+        ICliptoToken(_cliptoToken).setFeeRecipient(_feeRecipient);
+    }
+
+    function registerCreator(string calldata _creatorName, string calldata _metadataURI) external whenNotPaused {
         require(!_existsCreator(msg.sender), "error: creator already registered");
         _registerCreator(msg.sender, _creatorName, _metadataURI);
     }
 
-    function updateCreator(string calldata _metadataURI) external {
+    function updateCreator(string calldata _metadataURI) external whenNotPaused {
         require(_existsCreator(msg.sender), "error: creator is not yet registered");
         _updateCreator(msg.sender, _metadataURI);
     }
@@ -82,7 +103,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
         address _erc20,
         uint256 _amount,
         string calldata _metadataURI
-    ) external {
+    ) external whenNotPaused {
         _validateRequest(_creator, _amount);
         _checkAllowance(_erc20, msg.sender, _amount);
         _pay(msg.sender, address(this), _erc20, _amount);
@@ -95,14 +116,14 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
         address _erc20,
         uint256 _amount,
         string calldata _metadataURI
-    ) external {
+    ) external whenNotPaused {
         _validateRequest(_creator, _amount);
         _checkAllowance(_erc20, msg.sender, _amount);
         _pay(msg.sender, address(this), _erc20, _amount);
         _newRequest(_creator, _requester, _erc20, _amount, _metadataURI);
     }
 
-    function nativeNewRequest(address _creator, string calldata _metadataURI) external payable {
+    function nativeNewRequest(address _creator, string calldata _metadataURI) external payable whenNotPaused {
         _validateRequest(_creator, msg.value);
         _newRequest(_creator, msg.sender, address(0), msg.value, _metadataURI);
     }
@@ -111,11 +132,11 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
         address _creator,
         address _requester,
         string calldata _metadataURI
-    ) external payable {
+    ) external payable whenNotPaused {
         _newRequest(_creator, _requester, address(0), msg.value, _metadataURI);
     }
 
-    function deliverRequest(uint256 _requestId, string calldata _tokenURI) external nonReentrant {
+    function deliverRequest(uint256 _requestId, string calldata _tokenURI) external nonReentrant whenNotPaused {
         Request storage request = requests[msg.sender][_requestId];
         require(!request.fulfilled, "error: request already fulfilled/refunded");
 
@@ -133,7 +154,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
         emit DeliveredRequest(msg.sender, _requestId, nftTokenId + 1);
     }
 
-    function refundRequest(address _creator, uint256 _requestId) external nonReentrant {
+    function refundRequest(address _creator, uint256 _requestId) external nonReentrant whenNotPaused {
         Request storage request = requests[_creator][_requestId];
         require(request.requester == msg.sender, "error: only requester can make a refund");
         require(!request.fulfilled, "error: request already fulfilled/refunded");
@@ -180,6 +201,18 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
         }
 
         emit MigrationRequest(_creatorAddress, requestIds);
+    }
+
+    function migrateFunds(address _erc20, uint256 _amount) public onlyOwner {
+        _transferPayment(owner, _erc20, _amount);
+    }
+
+    function pause() public onlyOwner whenNotPaused {
+        super._pause();
+    }
+
+    function unpause() public onlyOwner whenPaused {
+        super._unpause();
     }
 
     function _transferPayment(
@@ -231,7 +264,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
 
     function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
         address nftAddress = Clones.clone(CLIPTO_TOKEN_ADDRESS);
-        ICliptoToken(nftAddress).initialize(address(this), _creatorName);
+        ICliptoToken(nftAddress).initialize(msg.sender, address(this), owner, _creatorName);
         return nftAddress;
     }
 
@@ -257,14 +290,10 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, ReentrancyGuard
             sent = IERC20(_erc20).transferFrom(_from, _to, _amount);
         }
         require(sent, "error: payment transfer failed");
-
-        emit Payment(_to, _erc20, _amount);
     }
 
     function _pay(address _to, uint256 _amount) internal {
         (bool sent, ) = _to.call{value: _amount}("");
         require(sent, "error: payment transfer failed");
-
-        emit Payment(_to, address(0), _amount);
     }
 }
