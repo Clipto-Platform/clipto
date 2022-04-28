@@ -327,4 +327,39 @@ describe("CliptoExchange", () => {
     expect(await token.symbol()).to.eql("CTO");
     expect(await token.name()).to.eql("Clipto Creator - creator");
   });
+
+  it("should complete a request after proxy update", async () => {
+    let tx = await cliptoExchange
+      .connect(account)
+      .registerCreator("sample creator", ipfsLink1);
+    await tx.wait();
+
+    tx = await erc20.connect(dummy).approve(cliptoExchange.address, 10);
+    await tx.wait();
+    tx = await cliptoExchange
+      .connect(dummy)
+      .newRequest(account.address, erc20.address, 10, ipfsLink1);
+    await tx.wait();
+
+    let request = await cliptoExchange.getRequest(account.address, 0);
+    expect(request.erc20).to.eql(erc20.address);
+    expect(request.amount.toNumber()).to.eql(10);
+
+    const cliptoExchangeV2 = await ethers.getContractFactory("CliptoExchangeV2");
+    cliptoExchange = (await upgrades.upgradeProxy(
+      cliptoExchange,
+      cliptoExchangeV2
+    )) as CliptoExchange;
+    tx = await cliptoExchange.connect(account).deliverRequest(0, ipfsLink2);
+    await tx.wait();
+
+    request = await cliptoExchange.getRequest(account.address, 0);
+    expect(request.fulfilled).to.eql(true);
+
+    const creator = await cliptoExchange.getCreator(account.address);
+    const token = await ethers.getContractAt("CliptoToken", creator.nft);
+    expect(await token.name()).to.eql("Clipto Creator - sample creator");
+    expect((await token.balanceOf(dummy.address)).toNumber()).to.eql(1);
+    expect(await token.tokenURI(1)).to.eql(ipfsLink2);
+  });
 });

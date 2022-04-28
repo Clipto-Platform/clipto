@@ -17,7 +17,6 @@ async function main() {
 
   console.log("\n");
   console.log("CliptoExchange with proxy deployed to : ", cliptoExchangeAddress);
-  console.log("CliptoExchange with proxy deployed to : ", proxy.address);
 }
 
 main().catch((error) => {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0 License
 pragma solidity ^0.8.10;
 
-contract CliptoExchangeStorage {
+abstract contract CliptoExchangeStorage {
     address public CLIPTO_TOKEN_ADDRESS;
     address public owner;
 
