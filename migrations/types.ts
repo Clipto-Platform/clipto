@@ -1,9 +1,7 @@
 export interface Config {
   rpcUrl: string;
-  contractAddress: string;
   graphAPI: string;
-  numberOfCreators: number;
-  abi: string[];
+  address: string;
 }
 
 export interface Creator {
@@ -62,8 +60,8 @@ export interface ResponseRequest {
 
 export interface MigrateCreatorArgs {
   creatorAddresses: string[];
-  tokenAddresses: string[];
-  jsonData: string[];
+  creatorNames: string[];
+  metadataUris: string[];
 }
 
 export interface MigrateRequestArgs {
@@ -71,5 +69,5 @@ export interface MigrateRequestArgs {
   requesterAddresses: string[];
   amount: number[];
   fulfilled: boolean[];
-  jsonData: string[];
+  metadataUris: string[];
 }

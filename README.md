@@ -20,9 +20,13 @@ cp .env.example .env
 
 ```
 npm run test
+
+# to run tests on localhost
+npm run node
+npm run test:localhost
 ```
 
-4. Other commands
+4. Deploy
 
 ```
 # to compile the contracts

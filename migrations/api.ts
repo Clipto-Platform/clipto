@@ -1,28 +1,20 @@
 import axios from "axios";
-import { minGraphRecords } from "./constants";
 
 const fetch = async <T>(
   url: string,
   query: string,
-  vars: any | undefined,
 ): Promise<any> => {
-  return axios.post(url, {
-    query: query,
-    variables: vars,
-  });
+    return await axios.post(url, {
+      query: query,
+    });
 };
 
 export const getCreators = async (url: string): Promise<any> => {
   const query = `
-    query GetAllCreators (
-        $first: Int!,
-        $skip: Int!
-    ) {
-        creators(
-            first: $first,
-            skip: $skip,
-            orderBy: timestamp
-        ){
+    query GetAllCreators 
+    {
+        creators
+        {
             id
             address
             tokenAddress
@@ -39,26 +31,15 @@ export const getCreators = async (url: string): Promise<any> => {
         }
     }
   `;
-
-  const variables = {
-    first: minGraphRecords,
-    skip: 0,
-  };
-
-  return fetch(url, query, variables);
+  return fetch(url, query);
 };
 
 export const getRequests = async (url: string): Promise<any> => {
   const query = `
-  query GetRequestById (
-    $first: Int!,
-    $skip: Int!
-) {
-    requests(
-      first: $first,
-      skip: $skip,
-      orderBy: timestamp
-    ){
+  query GetRequests
+  {
+    requests
+    {
       id
       requestId
       requester
@@ -80,10 +61,5 @@ export const getRequests = async (url: string): Promise<any> => {
   }
   `;
 
-  const variables = {
-    first: minGraphRecords,
-    skip: 0,
-  };
-
-  return fetch(url, query, variables);
+  return fetch(url, query);
 };

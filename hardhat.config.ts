@@ -51,6 +51,7 @@ const config: HardhatUserConfig = {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
   contractSizer: {
+    only: ["Clipto*"],
     alphaSort: true,
     disambiguatePaths: false,
     runOnCompile: true,
