@@ -15,7 +15,8 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     uint256 private _feeNumer;
     uint256 private _feeDenom;
 
-    address public unusedVarForTesting;
+    uint256 public unusedExtraVarForTesting;
+    string public meTooIsUnused;
 
     modifier onlyOwner() {
         require(owner == msg.sender, "not the owner");
@@ -42,40 +43,40 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         CLIPTO_TOKEN_ADDRESS = _cliptoToken;
     }
 
-    function getRequest(address _creator, uint256 _requestId) public view returns (Request memory) {
+    function getRequest(address _creator, uint256 _requestId) external view returns (Request memory) {
         return requests[_creator][_requestId];
     }
 
-    function getCreator(address _creator) public view returns (Creator memory) {
+    function getCreator(address _creator) external view returns (Creator memory) {
         return creators[_creator];
     }
 
-    function getFeeRate() public view returns (uint256, uint256) {
+    function getFeeRate() external view returns (uint256, uint256) {
         return (_feeNumer, _feeDenom);
     }
 
-    function updateCliptoTokenImplementation(address _newImplementation) public onlyOwner {
+    function updateCliptoTokenImplementation(address _newImplementation) external onlyOwner {
         require(_newImplementation != address(0), "not a valid implementation");
         CLIPTO_TOKEN_ADDRESS = _newImplementation;
     }
 
-    function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) public onlyOwner {
+    function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) external onlyOwner {
         require(feeDenom_ != 0, "error: denom should be non zero");
         _feeNumer = feeNumer_;
         _feeDenom = feeDenom_;
     }
 
-    function transferOwnership(address newOwner) public onlyOwner {
+    function transferOwnership(address newOwner) external onlyOwner {
         address oldOwner = owner;
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 
-    function setCliptoMinter(address _cliptoToken, address _minter) public onlyOwner {
+    function setCliptoMinter(address _cliptoToken, address _minter) external onlyOwner {
         ICliptoToken(_cliptoToken).setMinter(_minter);
     }
 
-    function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) public onlyOwner {
+    function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) external onlyOwner {
         ICliptoToken(_cliptoToken).setContractURI(_contractURI);
     }
 
@@ -83,11 +84,11 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         address _cliptoToken,
         uint256 _royaltyNumer,
         uint256 _royaltyDenom
-    ) public onlyOwner {
+    ) external onlyOwner {
         ICliptoToken(_cliptoToken).setRoyaltyRate(_royaltyNumer, _royaltyDenom);
     }
 
-    function setCliptoFeeRecipient(address _cliptoToken, address _feeRecipient) public onlyOwner {
+    function setCliptoFeeRecipient(address _cliptoToken, address _feeRecipient) external onlyOwner {
         ICliptoToken(_cliptoToken).setFeeRecipient(_feeRecipient);
     }
 
@@ -103,6 +104,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function newRequest(
         address _creator,
+        address _nftReceiver,
         address _erc20,
         uint256 _amount,
         string calldata _metadataURI
@@ -110,33 +112,16 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         _validateRequest(_creator, _amount);
         _checkAllowance(_erc20, msg.sender, _amount);
         _pay(msg.sender, address(this), _erc20, _amount);
-        _newRequest(_creator, msg.sender, _erc20, _amount, _metadataURI);
+        _newRequest(_creator, _nftReceiver, _erc20, _amount, _metadataURI);
     }
 
-    function newRequestFor(
+    function nativeNewRequest(
         address _creator,
-        address _requester,
-        address _erc20,
-        uint256 _amount,
-        string calldata _metadataURI
-    ) external whenNotPaused {
-        _validateRequest(_creator, _amount);
-        _checkAllowance(_erc20, msg.sender, _amount);
-        _pay(msg.sender, address(this), _erc20, _amount);
-        _newRequest(_creator, _requester, _erc20, _amount, _metadataURI);
-    }
-
-    function nativeNewRequest(address _creator, string calldata _metadataURI) external payable whenNotPaused {
-        _validateRequest(_creator, msg.value);
-        _newRequest(_creator, msg.sender, address(0), msg.value, _metadataURI);
-    }
-
-    function nativeNewRequestFor(
-        address _creator,
-        address _requester,
+        address _nftReceiver,
         string calldata _metadataURI
     ) external payable whenNotPaused {
-        _newRequest(_creator, _requester, address(0), msg.value, _metadataURI);
+        _validateRequest(_creator, msg.value);
+        _newRequest(_creator, _nftReceiver, address(0), msg.value, _metadataURI);
     }
 
     function deliverRequest(uint256 _requestId, string calldata _tokenURI) external nonReentrant whenNotPaused {
@@ -151,7 +136,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
         address nft = creators[msg.sender].nft;
         uint256 nftTokenId = ICliptoToken(nft).totalSupply();
-        ICliptoToken(nft).safeMint(request.requester, _tokenURI);
+        ICliptoToken(nft).safeMint(request.nftReceiver, _tokenURI);
 
         request.fulfilled = true;
         emit DeliveredRequest(msg.sender, _requestId, nftTokenId + 1);
@@ -172,7 +157,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         address[] calldata _creatorAddress,
         string[] calldata _creatorNames,
         string[] calldata _metadataURIs
-    ) public onlyOwner {
+    ) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256 i;
@@ -190,7 +175,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         uint256[] calldata _amount,
         bool[] calldata _fulfilled,
         string[] calldata _metadataURIs
-    ) public onlyOwner {
+    ) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256[] memory requestIds = new uint256[](_creatorAddress.length);
@@ -198,7 +183,14 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
         for (i = 0; i < _creatorAddress.length; i++) {
             requests[_creatorAddress[i]].push(
-                Request(_requesterAddress[i], address(0), _amount[i], _fulfilled[i], _metadataURIs[i])
+                Request(
+                    _requesterAddress[i],
+                    _requesterAddress[i],
+                    address(0),
+                    _amount[i],
+                    _fulfilled[i],
+                    _metadataURIs[i]
+                )
             );
             requestIds[i] = requests[_creatorAddress[i]].length - 1;
         }
@@ -206,16 +198,16 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         emit MigrationRequest(_creatorAddress, requestIds);
     }
 
-    function migrateFunds(address _erc20, uint256 _amount) public onlyOwner {
+    function migrateFunds(address _erc20, uint256 _amount) external onlyOwner {
         _transferPayment(owner, _erc20, _amount);
     }
 
-    function pause() public onlyOwner whenNotPaused {
-        super._pause();
+    function pause() external onlyOwner whenNotPaused {
+        _pause();
     }
 
-    function unpause() public onlyOwner whenPaused {
-        super._unpause();
+    function unpause() external onlyOwner whenPaused {
+        _unpause();
     }
 
     function _transferPayment(
@@ -252,12 +244,12 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function _newRequest(
         address _creator,
-        address _requester,
+        address _nftReceiver,
         address _erc20,
         uint256 _amount,
         string calldata _metadataURI
     ) internal {
-        requests[_creator].push(Request(_requester, _erc20, _amount, false, _metadataURI));
+        requests[_creator].push(Request(msg.sender, _nftReceiver, _erc20, _amount, false, _metadataURI));
         emit NewRequest(_creator, requests[_creator].length - 1);
     }
 

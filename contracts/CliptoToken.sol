@@ -52,11 +52,11 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IE
         return super.supportsInterface(interfaceId);
     }
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _currentTokenId.current() - 1;
     }
 
-    function contractURI() public view returns (string memory) {
+    function contractURI() external view returns (string memory) {
         return contractMetadataURI;
     }
 
@@ -98,14 +98,14 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable, IE
         _setTokenURI(tokenId, _tokenURI);
     }
 
-    function transferOwnership(address newOwner) public {
+    function transferOwnership(address newOwner) external {
         require(owner == msg.sender, "error: not the owner");
         address oldOwner = owner;
         owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
 
-    function burn(uint256 _tokenId) public {
+    function burn(uint256 _tokenId) external {
         require(_exists(_tokenId), "error: burn on nonexistent token");
         require(ownerOf(_tokenId) == _msgSender(), "error: only owner can call burn");
         _burn(_tokenId);

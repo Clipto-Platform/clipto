@@ -7,6 +7,7 @@ abstract contract CliptoExchangeStorage {
 
     struct Request {
         address requester;
+        address nftReceiver;
         address erc20;
         uint256 amount;
         bool fulfilled;
