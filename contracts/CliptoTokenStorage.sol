@@ -4,12 +4,8 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 abstract contract CliptoTokenStorage {
-    uint256 public royaltyNumer;
-    uint256 public royaltyDenom;
-
     address public owner;
     address public minter;
-    address public feeRecipient;
 
     string public contractMetadataURI;
 }

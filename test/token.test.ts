@@ -18,12 +18,7 @@ describe("CliptoToken", () => {
     cliptoToken = await CliptoToken.deploy();
     await cliptoToken.deployed();
 
-    const tx = await cliptoToken.initialize(
-      account.address,
-      account.address,
-      account.address,
-      "creator"
-    );
+    const tx = await cliptoToken.initialize(account.address, account.address, "creator");
     await tx.wait();
   });
 
@@ -53,24 +48,6 @@ describe("CliptoToken", () => {
     expect((await cliptoToken.balanceOf(dummy.address)).toNumber()).to.eql(1);
   });
 
-  it("should read and update royalty info", async () => {
-    let tx = await cliptoToken
-      .connect(account)
-      .safeMint(dummy.address, "https://google.com");
-    await tx.wait();
-
-    let royalty = await cliptoToken.royaltyInfo(1, 1000);
-    expect(royalty[0]).to.eql(account.address);
-    expect(royalty[1].toNumber()).to.eql(50);
-
-    tx = await cliptoToken.connect(account).setRoyaltyRate(10, 100);
-    await tx.wait();
-
-    royalty = await cliptoToken.royaltyInfo(1, 1000);
-    expect(royalty[0]).to.eql(account.address);
-    expect(royalty[1].toNumber()).to.eql(100);
-  });
-
   it("should burn token and update balance", async () => {
     let tx = await cliptoToken
       .connect(account)
@@ -95,11 +72,7 @@ describe("CliptoToken", () => {
 
     tx = await cliptoToken.connect(account).safeMint(dummy.address, "https://google.com");
     await tx.wait();
-    tx = await cliptoToken.connect(account).setRoyaltyRate(10, 100);
-    await tx.wait();
 
-    const royalty = await cliptoToken.royaltyInfo(1, 1000);
-    expect(royalty[0]).to.eql(account.address);
-    expect(royalty[1].toNumber()).to.eql(100);
+    expect(await cliptoToken.owner()).to.eql(dummy.address);
   });
 });

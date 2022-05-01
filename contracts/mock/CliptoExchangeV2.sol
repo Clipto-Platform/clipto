@@ -36,7 +36,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     function initialize(address _owner, address _cliptoToken) public initializer {
         __ReentrancyGuard_init();
         __Pausable_init();
-        ICliptoToken(_cliptoToken).initialize(_owner, address(this), _owner, "clipto");
+        ICliptoToken(_cliptoToken).initialize(_owner, address(this), "clipto");
 
         owner = _owner;
         _feeDenom = 1;
@@ -78,18 +78,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) external onlyOwner {
         ICliptoToken(_cliptoToken).setContractURI(_contractURI);
-    }
-
-    function setCliptoRoyaltyRate(
-        address _cliptoToken,
-        uint256 _royaltyNumer,
-        uint256 _royaltyDenom
-    ) external onlyOwner {
-        ICliptoToken(_cliptoToken).setRoyaltyRate(_royaltyNumer, _royaltyDenom);
-    }
-
-    function setCliptoFeeRecipient(address _cliptoToken, address _feeRecipient) external onlyOwner {
-        ICliptoToken(_cliptoToken).setFeeRecipient(_feeRecipient);
     }
 
     function registerCreator(string calldata _creatorName, string calldata _metadataURI) external whenNotPaused {
@@ -259,7 +247,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
         address nftAddress = Clones.clone(CLIPTO_TOKEN_ADDRESS);
-        ICliptoToken(nftAddress).initialize(msg.sender, address(this), owner, _creatorName);
+        ICliptoToken(nftAddress).initialize(msg.sender, address(this), _creatorName);
         return nftAddress;
     }
 
