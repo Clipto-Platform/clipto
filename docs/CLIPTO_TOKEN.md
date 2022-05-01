@@ -1,7 +1,7 @@
 ## Clipto Token
 
-This contract is an `ERC721` contract, which is assigned to each creator on the `clipto` platoform.
-For each new creator registered on the platform the `CliptoExchange` contract deployes a clone
+This contract is an `ERC721` contract, which is assigned to each creator on the `clipto` platform.
+For each new creator registered on the platform the `CliptoExchange` contract deploys a clone
 of the `CliptoToken` contract.
 
 The storage structure and its significance is discussed below.
