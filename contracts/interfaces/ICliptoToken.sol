@@ -5,7 +5,6 @@ interface ICliptoToken {
     function initialize(
         address _owner,
         address _minter,
-        address _feeRecipient,
         string memory _creatorName
     ) external;
 
@@ -17,19 +16,13 @@ interface ICliptoToken {
 
     function contractURI() external pure returns (string memory);
 
-    function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address, uint256);
-
     function tokenURI(uint256 _tokenId) external view returns (string memory);
-
-    function setRoyaltyRate(uint256 _royaltyNumer, uint256 _royaltyDenom) external;
 
     function safeMint(address to, string memory _tokenURI) external;
 
     function burn(uint256 _tokenId) external;
 
     function transferOwnership(address newOwner) external;
-
-    function setFeeRecipient(address _feeRecipient) external;
 
     function setMinter(address _minter) external;
 

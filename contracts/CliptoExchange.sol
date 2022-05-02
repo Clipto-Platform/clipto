@@ -27,12 +27,11 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
-    event MigrationRequest(address[] creators, uint256[] requestIds);
 
     function initialize(address _owner, address _cliptoToken) public initializer {
         __ReentrancyGuard_init();
         __Pausable_init();
-        ICliptoToken(_cliptoToken).initialize(_owner, address(this), _owner, "clipto");
+        ICliptoToken(_cliptoToken).initialize(_owner, address(this), "clipto");
 
         owner = _owner;
         _feeDenom = 1;
@@ -74,18 +73,6 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
     function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) external onlyOwner {
         ICliptoToken(_cliptoToken).setContractURI(_contractURI);
-    }
-
-    function setCliptoRoyaltyRate(
-        address _cliptoToken,
-        uint256 _royaltyNumer,
-        uint256 _royaltyDenom
-    ) external onlyOwner {
-        ICliptoToken(_cliptoToken).setRoyaltyRate(_royaltyNumer, _royaltyDenom);
-    }
-
-    function setCliptoFeeRecipient(address _cliptoToken, address _feeRecipient) external onlyOwner {
-        ICliptoToken(_cliptoToken).setFeeRecipient(_feeRecipient);
     }
 
     function registerCreator(string calldata _creatorName, string calldata _metadataURI) external whenNotPaused {
@@ -165,39 +152,6 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         emit MigrationCreator(_creatorAddress);
     }
 
-    function migrateRequest(
-        address[] calldata _creatorAddress,
-        address[] calldata _requesterAddress,
-        uint256[] calldata _amount,
-        bool[] calldata _fulfilled,
-        string[] calldata _metadataURIs
-    ) external onlyOwner {
-        require(_creatorAddress.length > 0, "error: empty creator address");
-
-        uint256[] memory requestIds = new uint256[](_creatorAddress.length);
-        uint256 i;
-
-        for (i = 0; i < _creatorAddress.length; i++) {
-            requests[_creatorAddress[i]].push(
-                Request(
-                    _requesterAddress[i],
-                    _requesterAddress[i],
-                    address(0),
-                    _amount[i],
-                    _fulfilled[i],
-                    _metadataURIs[i]
-                )
-            );
-            requestIds[i] = requests[_creatorAddress[i]].length - 1;
-        }
-
-        emit MigrationRequest(_creatorAddress, requestIds);
-    }
-
-    function migrateFunds(address _erc20, uint256 _amount) external onlyOwner {
-        _transferPayment(owner, _erc20, _amount);
-    }
-
     function pause() external onlyOwner whenNotPaused {
         _pause();
     }
@@ -255,7 +209,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
     function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
         address nftAddress = Clones.clone(CLIPTO_TOKEN_ADDRESS);
-        ICliptoToken(nftAddress).initialize(msg.sender, address(this), owner, _creatorName);
+        ICliptoToken(nftAddress).initialize(msg.sender, address(this), _creatorName);
         return nftAddress;
     }
 

@@ -299,24 +299,6 @@ describe("CliptoExchange", () => {
     expect(feeDestNewBalance.toNumber() - feeDestPrevBalance.toNumber()).to.eql(1); // 10% of amount 10
   });
 
-  it("should migrate requests", async () => {
-    const tx = await cliptoExchange.migrateRequest(
-      [account.address],
-      [dummy.address],
-      [10],
-      [true],
-      [ipfsLink1]
-    );
-    await tx.wait();
-
-    const request = await cliptoExchange.getRequest(account.address, 0);
-    expect(request.requester).to.eql(dummy.address);
-    expect(request.erc20).to.eql(NULL_ADDR);
-    expect(request.amount.toNumber()).to.eql(10);
-    expect(request.fulfilled).to.eql(true);
-    expect(request.metadataURI).to.eql(ipfsLink1);
-  });
-
   it("should migrate creators", async () => {
     const tx = await cliptoExchange.migrateCreator(
       [account.address],
