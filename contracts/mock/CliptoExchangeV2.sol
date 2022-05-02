@@ -27,7 +27,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     event CreatorRegistered(address indexed creator, address indexed nft);
     event CreatorUpdated(address indexed creator, string metadataURI);
     event NewRequest(address indexed creator, uint256 requestId);
-    event RequestUpdated(address indexed creator, uint256 updatedAmount);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
