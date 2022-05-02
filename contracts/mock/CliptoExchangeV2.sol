@@ -141,49 +141,16 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         emit RefundedRequest(_creator, _requestId);
     }
 
-    function migrateCreator(
-        address[] calldata _creatorAddress,
-        string[] calldata _creatorNames,
-        string[] calldata _metadataURIs
-    ) external onlyOwner {
+    function migrateCreator(address[] calldata _creatorAddress, string[] calldata _creatorNames) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256 i;
         for (i = 0; i < _creatorAddress.length; i++) {
             address nft = _deployCliptoFor(_creatorNames[i]);
-            creators[_creatorAddress[i]] = Creator(nft, _metadataURIs[i]);
+            creators[_creatorAddress[i]] = Creator(nft, "");
         }
 
         emit MigrationCreator(_creatorAddress);
-    }
-
-    function migrateRequest(
-        address[] calldata _creatorAddress,
-        address[] calldata _requesterAddress,
-        uint256[] calldata _amount,
-        bool[] calldata _fulfilled,
-        string[] calldata _metadataURIs
-    ) external onlyOwner {
-        require(_creatorAddress.length > 0, "error: empty creator address");
-
-        uint256[] memory requestIds = new uint256[](_creatorAddress.length);
-        uint256 i;
-
-        for (i = 0; i < _creatorAddress.length; i++) {
-            requests[_creatorAddress[i]].push(
-                Request(
-                    _requesterAddress[i],
-                    _requesterAddress[i],
-                    address(0),
-                    _amount[i],
-                    _fulfilled[i],
-                    _metadataURIs[i]
-                )
-            );
-            requestIds[i] = requests[_creatorAddress[i]].length - 1;
-        }
-
-        emit MigrationRequest(_creatorAddress, requestIds);
     }
 
     function migrateFunds(address _erc20, uint256 _amount) external onlyOwner {

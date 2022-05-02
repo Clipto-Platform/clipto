@@ -1,2 +1,3 @@
 ## DOCS
-Documentations for contracts of clipto platform. 
+
+Documentations for contracts of clipto platform.

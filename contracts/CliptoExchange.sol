@@ -23,7 +23,6 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     event CreatorRegistered(address indexed creator, address indexed nft);
     event CreatorUpdated(address indexed creator, string metadataURI);
     event NewRequest(address indexed creator, uint256 requestId);
-    event RequestUpdated(address indexed creator, uint256 updatedAmount);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
@@ -136,17 +135,13 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         emit RefundedRequest(_creator, _requestId);
     }
 
-    function migrateCreator(
-        address[] calldata _creatorAddress,
-        string[] calldata _creatorNames,
-        string[] calldata _metadataURIs
-    ) external onlyOwner {
+    function migrateCreator(address[] calldata _creatorAddress, string[] calldata _creatorNames) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256 i;
         for (i = 0; i < _creatorAddress.length; i++) {
             address nft = _deployCliptoFor(_creatorNames[i]);
-            creators[_creatorAddress[i]] = Creator(nft, _metadataURIs[i]);
+            creators[_creatorAddress[i]] = Creator(nft, "");
         }
 
         emit MigrationCreator(_creatorAddress);
