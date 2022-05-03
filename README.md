@@ -55,15 +55,19 @@ npm run hooks
 
 ## Deployments
 
-### Mumbai
+### V1
+V1 refers to graph based architecture
 
 ```
-CliptoExchange : 0x1E425016eb93ec7a3811Cca76a64A80B0129AEdb
-CliptoToken    : 0xF6505f3D0C5998b13b48B9f4bDB28df71916779e
-```
-
-### Polygon
-
+Mumbai
+CliptoExchange : 0x307736eCecF51104a841CfF44A2508775878fe3f
+CliptoToken    : 0x11FAEacaacf5a0Bfc3F581e8900D9448c2D466e4
 ```
 
 ```
+Polygon
+CliptoExchange : 0x36A9F25B8AA6b941B0c8177684E8ecff59376D9a
+CliptoToken    : 0xa318A87Fd79d7cD91288b4C08896BebCd788Fac4
+```
+
+### V2

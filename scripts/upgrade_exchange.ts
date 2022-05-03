@@ -2,6 +2,11 @@ import * as dotenv from "dotenv";
 import { ethers, upgrades } from "hardhat";
 dotenv.config();
 
+/*
+ * this script updates the proxy implementation
+ * of clipto exchange, the proxy address should remain
+ * same.
+ */
 async function main() {
   const proxyAddress = "";
 
@@ -16,7 +21,8 @@ async function main() {
   const cliptoExchangeAddress = proxy.address;
 
   console.log("\n");
-  console.log("CliptoExchange with proxy deployed to : ", cliptoExchangeAddress);
+  console.log("Clipto exchange proxy old : ", proxyAddress);
+  console.log("Clipto exchange proxy new : ", cliptoExchangeAddress);
 }
 
 main().catch((error) => {
