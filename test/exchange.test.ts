@@ -51,7 +51,6 @@ describe("CliptoExchange", () => {
 
   it("should return values for all readable functions", async () => {
     expect(await cliptoExchange.owner()).to.eql(account.address);
-    expect(await cliptoExchange.CLIPTO_TOKEN_ADDRESS()).to.eql(cliptoToken.address);
 
     const feeRate = await cliptoExchange.getFeeRate();
     expect(feeRate[0].toNumber()).to.eql(0);
@@ -255,17 +254,6 @@ describe("CliptoExchange", () => {
     expect(await cliptoExchange.owner()).to.eql(dummy.address);
   });
 
-  it("should change the clipto token implementation", async () => {
-    expect(await cliptoExchange.CLIPTO_TOKEN_ADDRESS()).to.eql(cliptoToken.address);
-
-    const tx = await cliptoExchange.updateCliptoTokenImplementation(
-      cliptoExchange.address
-    );
-    await tx.wait();
-
-    expect(await cliptoExchange.CLIPTO_TOKEN_ADDRESS()).to.eql(cliptoExchange.address);
-  });
-
   it("should update fees", async () => {
     const feeRate = await cliptoExchange.getFeeRate();
     expect(feeRate[0].toNumber()).to.eql(0);
@@ -300,15 +288,10 @@ describe("CliptoExchange", () => {
   });
 
   it("should migrate creators", async () => {
-    const tx = await cliptoExchange.migrateCreator(
-      [account.address],
-      ["creator"],
-      [ipfsLink1]
-    );
+    const tx = await cliptoExchange.migrateCreator([account.address], ["creator"]);
     await tx.wait();
 
     const creator = await cliptoExchange.getCreator(account.address);
-    expect(creator.metadataURI).to.eql(ipfsLink1);
     expect(creator.nft.length).not.eql(0);
 
     const token = await ethers.getContractAt("CliptoToken", creator.nft);
