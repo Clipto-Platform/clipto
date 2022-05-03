@@ -1,16 +1,16 @@
 import * as api from "./api";
 import { Config, Creator, MigrateCreatorArgs } from "./types";
 
-export const allCreators = async (config: Config): Promise<Creator[]> => {
-  let res = await api.getCreators(config.graphAPI);
-  let raw: [] = res.data.data.creators;
-  return raw;
-};
-
-export const getCreatorArgs = async (config: Config): Promise<MigrateCreatorArgs> => {
+export const getCreatorArgs = async (
+  config: Config,
+  first: number,
+  skip: number
+): Promise<MigrateCreatorArgs> => {
   const creatorAddresses: string[] = [];
   const creatorNames: string[] = [];
-  const creators = await allCreators(config);
+
+  let res = await api.getCreators(config.graphAPI, first, skip);
+  const creators: Creator[] = res.data.data.creators;
 
   creators.forEach((creator) => {
     creatorAddresses.push(creator.address.toLowerCase());

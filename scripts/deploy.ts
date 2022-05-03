@@ -1,29 +1,27 @@
 import * as dotenv from "dotenv";
 import { ethers, upgrades } from "hardhat";
-// eslint-disable-next-line node/no-missing-import
-import { CliptoExchange } from "../typechain";
 
 dotenv.config();
 
+/*
+ * this script deploys the exchange and token contracts
+ * along with their beacon and proxy.
+ */
 async function main() {
   const feeDestination =
     process.env.FEE_DESTINATION_ADDRESS || "0x7c98C2DEc5038f00A2cbe8b7A64089f9c0b51991";
 
-  const CliptoToken = await ethers.getContractFactory("CliptoToken");
-  const cliptoTokenBeacon = await upgrades.deployBeacon(CliptoToken);
+  const cliptoToken = await ethers.getContractFactory("CliptoToken");
+  const cliptoTokenBeacon = await upgrades.deployBeacon(cliptoToken);
   await cliptoTokenBeacon.deployed();
+  const cliptoTokenAddress = cliptoTokenBeacon.address;
 
-  const CliptoExchange = await ethers.getContractFactory("CliptoExchange");
-
-  let cliptoToken = await upgrades.deployBeacon(CliptoToken);
-  cliptoToken = await cliptoToken.deployed();
-  const cliptoTokenAddress = cliptoToken.address;
-
-  let cliptoExchangeProxy = (await upgrades.deployProxy(CliptoExchange, [
+  const cliptoExchange = await ethers.getContractFactory("CliptoExchange");
+  const cliptoExchangeProxy = await upgrades.deployProxy(cliptoExchange, [
     feeDestination,
     cliptoTokenBeacon.address,
-  ])) as CliptoExchange;
-  cliptoExchangeProxy = await cliptoExchangeProxy.deployed();
+  ]);
+  await cliptoExchangeProxy.deployed();
   const cliptoExchangeAddress = cliptoExchangeProxy.address;
 
   console.log("\n");

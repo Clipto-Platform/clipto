@@ -1,21 +1,32 @@
 import axios from "axios";
 
-const fetch = async <T>(url: string, query: string): Promise<any> => {
-  return await axios.post(url, {
-    query: query,
-  });
-};
-
-export const getCreators = async (url: string): Promise<any> => {
+export const getCreators = async (
+  url: string,
+  first: number,
+  skip: number
+): Promise<any> => {
   const query = `
-    query GetAllCreators 
+    query GetAllCreators (
+      $first: Int!,
+      $skip: Int!
+    )
     {
-        creators
+        creators(
+          first: $first,
+          skip: $skip,
+          orderBy: timestamp
+        )
         {
             address
             userName
         }
     }
   `;
-  return fetch(url, query);
+  return await axios.post(url, {
+    query: query,
+    variables: {
+      first: first,
+      skip: skip,
+    },
+  });
 };
