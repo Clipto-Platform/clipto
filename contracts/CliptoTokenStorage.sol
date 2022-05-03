@@ -6,6 +6,4 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 abstract contract CliptoTokenStorage {
     address public owner;
     address public minter;
-
-    string public contractMetadataURI;
 }

@@ -5,9 +5,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-import "./CliptoTokenStorage.sol";
+import "../CliptoTokenStorage.sol";
 
-contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable {
+contract CliptoTokenV2 is CliptoTokenStorage, Initializable, ERC721Upgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _currentTokenId;
@@ -38,8 +38,9 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable {
         return _currentTokenId.current() - 1;
     }
 
+    // @mock change to contract uri
     function contractURI() external pure returns (string memory) {
-        return "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH";
+        return "ipfs://QmQUgb26NHQN1BTBY3JhjwJTaykHnqUxT2kCTTEcAxsMoN";
     }
 
     function tokenURI(uint256 _tokenId) public view override(ERC721Upgradeable) returns (string memory) {
