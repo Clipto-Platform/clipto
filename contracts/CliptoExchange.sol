@@ -50,6 +50,8 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
     function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) external onlyOwner {
         require(feeDenom_ != 0, "error: denom should be non zero");
+        require(feeNumer_ <= feeDenom_, "error: denom should be smaller than numer");
+
         _feeNumer = feeNumer_;
         _feeDenom = feeDenom_;
     }
@@ -196,6 +198,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         CloneableBeaconProxy proxy = new CloneableBeaconProxy();
         address nftAddress = address(proxy);
 
+        require(nftAddress != address(0), "error: beacon proxy deploy failed");
         proxy.__ClonableBeacon_init(beacon);
         ICliptoToken(nftAddress).initialize(msg.sender, address(this), _creatorName);
         return nftAddress;

@@ -56,6 +56,7 @@ npm run hooks
 ## Deployments
 
 ### V1
+
 V1 refers to graph based architecture
 
 ```
@@ -70,4 +71,10 @@ CliptoExchange : 0x36A9F25B8AA6b941B0c8177684E8ecff59376D9a
 CliptoToken    : 0xa318A87Fd79d7cD91288b4C08896BebCd788Fac4
 ```
 
-### V2
+### Latest
+
+```
+Mumbai
+CliptoExchange Proxy : 0xA7d44425940D85F5fB37756Ab60B68BCA8B58732
+CliptoToken Beacon   : 0x0Ceed0Bc8834F8aE15E8cd1336f0A6cbcbA7a4Be
+```

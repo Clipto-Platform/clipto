@@ -14,7 +14,7 @@ contract CloneableBeaconProxy is Initializable, Proxy {
 
     function __ClonableBeacon_init(address _beacon) public initializer {
         assert(_BEACON_SLOT == bytes32(uint256(keccak256("eip1967.proxy.beacon")) - 1));
-        _upgradeBeaconTo(_beacon);
+        _setBeacon(_beacon);
     }
 
     function beacon() external view returns (address) {
@@ -23,10 +23,6 @@ contract CloneableBeaconProxy is Initializable, Proxy {
 
     function _implementation() internal view virtual override returns (address) {
         return IBeacon(_getBeacon()).implementation();
-    }
-
-    function _upgradeBeaconTo(address newBeacon) internal {
-        _setBeacon(newBeacon);
     }
 
     function _getBeacon() internal view returns (address) {

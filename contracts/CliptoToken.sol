@@ -27,7 +27,6 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable {
         string memory _creatorName
     ) public initializer {
         ERC721Upgradeable.__ERC721_init(string(abi.encodePacked("Clipto Creator - ", _creatorName)), "CTO");
-
         _currentTokenId.increment();
 
         owner = _owner;
