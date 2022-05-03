@@ -25,6 +25,4 @@ interface ICliptoToken {
     function transferOwnership(address newOwner) external;
 
     function setMinter(address _minter) external;
-
-    function setContractURI(string calldata _contractURI) external;
 }

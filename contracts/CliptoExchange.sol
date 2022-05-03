@@ -70,10 +70,6 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         ICliptoToken(_cliptoToken).setMinter(_minter);
     }
 
-    function setCliptoContractURI(address _cliptoToken, string calldata _contractURI) external onlyOwner {
-        ICliptoToken(_cliptoToken).setContractURI(_contractURI);
-    }
-
     function registerCreator(string calldata _creatorName, string calldata _metadataURI) external whenNotPaused {
         require(!_existsCreator(msg.sender), "error: creator already registered");
         _registerCreator(msg.sender, _creatorName, _metadataURI);
