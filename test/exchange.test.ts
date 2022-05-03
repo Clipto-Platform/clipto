@@ -20,15 +20,15 @@ describe("CliptoExchange", () => {
     dummy = accounts[1];
 
     const CliptoToken = await ethers.getContractFactory("CliptoToken");
-    cliptoToken = await CliptoToken.deploy();
+    cliptoToken = (await upgrades.deployBeacon(CliptoToken)) as CliptoToken;
     await cliptoToken.deployed();
 
     const CliptoExchange = await ethers.getContractFactory("CliptoExchange");
-    const proxy = await upgrades.deployProxy(CliptoExchange, [
+    cliptoExchange = (await upgrades.deployProxy(CliptoExchange, [
       account.address,
       cliptoToken.address,
-    ]);
-    cliptoExchange = (await proxy.deployed()) as CliptoExchange;
+    ])) as CliptoExchange;
+    cliptoExchange = await cliptoExchange.deployed();
 
     const myErc = await ethers.getContractFactory("MyERC20");
     erc20 = await myErc.deploy("atul token", "ATUL");
@@ -372,5 +372,31 @@ describe("CliptoExchange", () => {
     const token = await ethers.getContractAt("CliptoToken", creatorData.nft);
     expect((await token.balanceOf(nftReceiver.address)).toNumber()).to.eql(1);
     expect(await token.tokenURI(1)).to.eql(ipfsLink2);
+  });
+
+  it("should update implementation of beacon", async () => {
+    const creator = account;
+
+    const tx = await cliptoExchange
+      .connect(creator)
+      .registerCreator("sample creator", ipfsLink1);
+    await tx.wait();
+
+    const creatorData = await cliptoExchange.getCreator(account.address);
+    expect(creatorData.nft.length).not.eql(0);
+
+    const token = await ethers.getContractAt("CliptoToken", creatorData.nft);
+    expect(await token.contractURI()).to.eql(
+      "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
+    );
+
+    const cliptoTokenV2 = await ethers.getContractFactory("CliptoTokenV2");
+    cliptoToken = (await upgrades.upgradeBeacon(
+      cliptoToken,
+      cliptoTokenV2
+    )) as CliptoToken;
+    expect(await token.contractURI()).to.eql(
+      "ipfs://QmQUgb26NHQN1BTBY3JhjwJTaykHnqUxT2kCTTEcAxsMoN"
+    );
   });
 });

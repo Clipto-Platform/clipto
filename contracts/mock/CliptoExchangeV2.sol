@@ -4,9 +4,9 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "../beacon/CloneableBeaconProxy.sol";
 import "../interfaces/ICliptoToken.sol";
 import "../CliptoExchangeStorage.sol";
 
@@ -16,7 +16,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     uint256 private _feeDenom;
 
     uint256 public unusedExtraVarForTesting;
-    string public meTooIsUnused;
 
     modifier onlyOwner() {
         require(owner == msg.sender, "not the owner");
@@ -30,16 +29,14 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
-    event MigrationRequest(address[] creators, uint256[] requestIds);
 
-    function initialize(address _owner, address _cliptoToken) public initializer {
+    function initialize(address _owner, address _beacon) public initializer {
         __ReentrancyGuard_init();
         __Pausable_init();
-        ICliptoToken(_cliptoToken).initialize(_owner, address(this), "clipto");
 
+        beacon = _beacon;
         owner = _owner;
         _feeDenom = 1;
-        CLIPTO_TOKEN_ADDRESS = _cliptoToken;
     }
 
     function getRequest(address _creator, uint256 _requestId) external view returns (Request memory) {
@@ -52,11 +49,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function getFeeRate() external view returns (uint256, uint256) {
         return (_feeNumer, _feeDenom);
-    }
-
-    function updateCliptoTokenImplementation(address _newImplementation) external onlyOwner {
-        require(_newImplementation != address(0), "not a valid implementation");
-        CLIPTO_TOKEN_ADDRESS = _newImplementation;
     }
 
     function setFeeRate(uint256 feeNumer_, uint256 feeDenom_) external onlyOwner {
@@ -148,10 +140,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         emit MigrationCreator(_creatorAddress);
     }
 
-    function migrateFunds(address _erc20, uint256 _amount) external onlyOwner {
-        _transferPayment(owner, _erc20, _amount);
-    }
-
     function pause() external onlyOwner whenNotPaused {
         _pause();
     }
@@ -208,7 +196,10 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     }
 
     function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
-        address nftAddress = Clones.clone(CLIPTO_TOKEN_ADDRESS);
+        CloneableBeaconProxy proxy = new CloneableBeaconProxy();
+        address nftAddress = address(proxy);
+
+        proxy.__ClonableBeacon_init(beacon);
         ICliptoToken(nftAddress).initialize(msg.sender, address(this), _creatorName);
         return nftAddress;
     }
