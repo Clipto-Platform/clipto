@@ -9,7 +9,7 @@ async function main() {
   const CliptoToken = await ethers.getContractFactory("CliptoToken");
   const CliptoExchange = await ethers.getContractFactory("CliptoExchange");
 
-  let cliptoToken = await CliptoToken.deploy();
+  let cliptoToken = await upgrades.deployBeacon(CliptoToken);
   cliptoToken = await cliptoToken.deployed();
   const cliptoTokenAddress = cliptoToken.address;
 
@@ -22,7 +22,7 @@ async function main() {
 
   console.log("\n");
   console.log("Owner of the contracts                : ", feeDestination);
-  console.log("CliptoToken deployed to               : ", cliptoTokenAddress);
+  console.log("CliptoToken beacon deployed to        : ", cliptoTokenAddress);
   console.log("CliptoExchange with proxy deployed to : ", cliptoExchangeAddress);
 }
 
