@@ -3,6 +3,6 @@ export const graphAPI =
 export const rpcUrl =
   "https://polygon-mumbai.g.alchemy.com/v2/VMBpFqjMYv2w-MWnc9df92w3R2TpMvSG";
 
-export const contractAddress = "0xA7d44425940D85F5fB37756Ab60B68BCA8B58732";
+export const contractAddress = "0x6c031C8b806C6ea590ecB8Fd358A02De86623D76";
 
 export const NULL_ADDR = "0x0000000000000000000000000000000000000000";

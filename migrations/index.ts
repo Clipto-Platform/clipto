@@ -5,8 +5,8 @@ import { getCreatorArgs } from "./entity";
 import { Config } from "./types";
 
 const TOTAL_CREATORS = 12;
-const BATCH_SIZE = 5;
-const EPOCHS = 3;
+const BATCH_SIZE = 6;
+const EPOCHS = 2;
 
 const config: Config = {
   rpcUrl: constants.rpcUrl,
@@ -84,7 +84,7 @@ const verify = async () => {
 };
 
 // To migrate all data
-// migrate().catch((err) => console.log(err));
+migrate().catch((err) => console.log(err));
 
 // To verify all data
 // verify().catch((err) => console.log(err));

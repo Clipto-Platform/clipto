@@ -19,7 +19,7 @@ async function main() {
   const cliptoExchange = await ethers.getContractFactory("CliptoExchange");
   const cliptoExchangeProxy = await upgrades.deployProxy(cliptoExchange, [
     feeDestination,
-    cliptoTokenBeacon.address,
+    cliptoTokenAddress,
   ]);
   await cliptoExchangeProxy.deployed();
   const cliptoExchangeAddress = cliptoExchangeProxy.address;
