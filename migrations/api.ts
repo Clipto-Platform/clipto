@@ -17,8 +17,19 @@ export const getCreators = async (
           orderBy: timestamp
         )
         {
-            address
-            userName
+          id
+          address
+          tokenAddress
+          twitterHandle
+          bio
+          deliveryTime
+          demos
+          profilePicture
+          userName
+          price
+          txHash
+          block
+          timestamp
         }
     }
   `;

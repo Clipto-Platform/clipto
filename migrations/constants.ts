@@ -1,5 +1,5 @@
 export const graphAPI =
-  "https://api.thegraph.com/subgraphs/name/clipto-platform/clipto-subgraph-mainnet";
+  "https://api.thegraph.com/subgraphs/name/ap-atul/clipto-subgraph-v2";
 export const rpcUrl =
   "https://polygon-mumbai.g.alchemy.com/v2/VMBpFqjMYv2w-MWnc9df92w3R2TpMvSG";
 

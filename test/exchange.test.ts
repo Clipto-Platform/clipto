@@ -288,7 +288,11 @@ describe("CliptoExchange", () => {
   });
 
   it("should migrate creators", async () => {
-    const tx = await cliptoExchange.migrateCreator([account.address], ["creator"]);
+    const tx = await cliptoExchange.migrateCreator(
+      [account.address],
+      ["creator"],
+      [ipfsLink1]
+    );
     await tx.wait();
 
     const creator = await cliptoExchange.getCreator(account.address);

@@ -4,9 +4,9 @@ import * as constants from "./constants";
 import { getCreatorArgs } from "./entity";
 import { Config } from "./types";
 
-const TOTAL_CREATORS = 99;
+const TOTAL_CREATORS = 12;
 const BATCH_SIZE = 5;
-const EPOCHS = 20;
+const EPOCHS = 3;
 
 const config: Config = {
   rpcUrl: constants.rpcUrl,
@@ -28,7 +28,11 @@ const migrateCreators = async (
   const args = await getCreatorArgs(config, first, skip);
 
   console.log(`Migrating ${args.creatorAddresses.length} creators ...`);
-  const tx = await contract.migrateCreator(args.creatorAddresses, args.creatorNames);
+  const tx = await contract.migrateCreator(
+    args.creatorAddresses,
+    args.creatorNames,
+    args.metadatURI
+  );
   await tx.wait();
   console.log(`Migrations complete`);
 };
