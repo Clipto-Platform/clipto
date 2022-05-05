@@ -136,7 +136,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
         uint256 i;
         for (i = 0; i < _creatorAddress.length; i++) {
-            address nft = _deployCliptoFor(_creatorNames[i]);
+            address nft = _deployCliptoFor(_creatorAddress[i],_creatorNames[i]);
             creators[_creatorAddress[i]] = Creator(nft, _metadataURI[i]);
         }
 
@@ -165,7 +165,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         string calldata _creatorName,
         string calldata _metadataURI
     ) internal {
-        address nft = _deployCliptoFor(_creatorName);
+        address nft = _deployCliptoFor(msg.sender, _creatorName);
         creators[_creator] = Creator(nft, _metadataURI);
 
         emit CreatorRegistered(_creator, nft);
@@ -198,13 +198,13 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         return creators[_creator].nft != address(0);
     }
 
-    function _deployCliptoFor(string calldata _creatorName) internal returns (address) {
+    function _deployCliptoFor(address _creator, string calldata _creatorName) internal returns (address) {
         CloneableBeaconProxy proxy = new CloneableBeaconProxy();
         address nftAddress = address(proxy);
 
         require(nftAddress != address(0), "error: beacon proxy deploy failed");
         proxy.__ClonableBeacon_init(beacon);
-        ICliptoToken(nftAddress).initialize(msg.sender, address(this), _creatorName);
+        ICliptoToken(nftAddress).initialize(_creator, address(this), _creatorName);
         return nftAddress;
     }
 

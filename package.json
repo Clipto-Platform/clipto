@@ -60,6 +60,7 @@
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
     "@pinata/sdk": "^1.1.25",
     "axios": "^0.27.2",
-    "hardhat-contract-sizer": "^2.5.1"
+    "hardhat-contract-sizer": "^2.5.1",
+    "ipfs-http-client": "^56.0.3"
   }
 }
