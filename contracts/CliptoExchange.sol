@@ -20,9 +20,9 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     }
 
     event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
-    event CreatorRegistered(address indexed creator, address indexed nft);
-    event CreatorUpdated(address indexed creator, string metadataURI);
-    event NewRequest(address indexed creator, uint256 requestId);
+    event CreatorRegistered(address indexed creator, address indexed nft, string jsondata);
+    event CreatorUpdated(address indexed creator, string jsondata);
+    event NewRequest(address indexed creator, uint256 requestId, string jsondata);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
@@ -40,7 +40,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         return requests[_creator][_requestId];
     }
 
-    function getCreator(address _creator) external view returns (Creator memory) {
+    function getCreator(address _creator) external view returns (address) {
         return creators[_creator];
     }
 
@@ -66,14 +66,14 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         ICliptoToken(_cliptoToken).setMinter(_minter);
     }
 
-    function registerCreator(string calldata _creatorName, string calldata _metadataURI) external whenNotPaused {
+    function registerCreator(string calldata _creatorName, string calldata _jsondata) external whenNotPaused {
         require(!_existsCreator(msg.sender), "error: creator already registered");
-        _registerCreator(msg.sender, _creatorName, _metadataURI);
+        _registerCreator(msg.sender, _creatorName, _jsondata);
     }
 
-    function updateCreator(string calldata _metadataURI) external whenNotPaused {
+    function updateCreator(string calldata _jsondata) external whenNotPaused {
         require(_existsCreator(msg.sender), "error: creator is not yet registered");
-        _updateCreator(msg.sender, _metadataURI);
+        _updateCreator(msg.sender, _jsondata);
     }
 
     function newRequest(
@@ -81,21 +81,21 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         address _nftReceiver,
         address _erc20,
         uint256 _amount,
-        string calldata _metadataURI
+        string calldata _jsonData
     ) external whenNotPaused {
         _validateRequest(_creator, _amount);
         _checkAllowance(_erc20, msg.sender, _amount);
         _pay(msg.sender, address(this), _erc20, _amount);
-        _newRequest(_creator, _nftReceiver, _erc20, _amount, _metadataURI);
+        _newRequest(_creator, _nftReceiver, _erc20, _amount, _jsonData);
     }
 
     function nativeNewRequest(
         address _creator,
         address _nftReceiver,
-        string calldata _metadataURI
+        string calldata _jsonData
     ) external payable whenNotPaused {
         _validateRequest(_creator, msg.value);
-        _newRequest(_creator, _nftReceiver, address(0), msg.value, _metadataURI);
+        _newRequest(_creator, _nftReceiver, address(0), msg.value, _jsonData);
     }
 
     function deliverRequest(uint256 _requestId, string calldata _tokenURI) external nonReentrant whenNotPaused {
@@ -108,7 +108,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         uint256 paymentAmount = request.amount - feeAmount;
         _transferPayment(msg.sender, request.erc20, paymentAmount);
 
-        address nft = creators[msg.sender].nft;
+        address nft = creators[msg.sender];
         uint256 nftTokenId = ICliptoToken(nft).totalSupply();
         ICliptoToken(nft).safeMint(request.nftReceiver, _tokenURI);
 
@@ -127,17 +127,13 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         emit RefundedRequest(_creator, _requestId);
     }
 
-    function migrateCreator(
-        address[] calldata _creatorAddress,
-        string[] calldata _creatorNames,
-        string[] calldata _metadataURI
-    ) external onlyOwner {
+    function migrateCreator(address[] calldata _creatorAddress, string[] calldata _creatorNames) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
         uint256 i;
         for (i = 0; i < _creatorAddress.length; i++) {
-            address nft = _deployCliptoFor(_creatorAddress[i],_creatorNames[i]);
-            creators[_creatorAddress[i]] = Creator(nft, _metadataURI[i]);
+            address nft = _deployCliptoFor(_creatorAddress[i], _creatorNames[i]);
+            creators[_creatorAddress[i]] = nft;
         }
 
         emit MigrationCreator(_creatorAddress);
@@ -163,19 +159,16 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     function _registerCreator(
         address _creator,
         string calldata _creatorName,
-        string calldata _metadataURI
+        string calldata _jsondata
     ) internal {
         address nft = _deployCliptoFor(msg.sender, _creatorName);
-        creators[_creator] = Creator(nft, _metadataURI);
+        creators[_creator] = nft;
 
-        emit CreatorRegistered(_creator, nft);
+        emit CreatorRegistered(_creator, nft, _jsondata);
     }
 
-    function _updateCreator(address _creator, string calldata _metadataURI) internal {
-        Creator storage creator = creators[_creator];
-        creator.metadataURI = _metadataURI;
-
-        emit CreatorUpdated(_creator, _metadataURI);
+    function _updateCreator(address _creator, string calldata _jsondata) internal {
+        emit CreatorUpdated(_creator, _jsondata);
     }
 
     function _validateRequest(address _creator, uint256 _amount) internal view {
@@ -188,14 +181,14 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         address _nftReceiver,
         address _erc20,
         uint256 _amount,
-        string calldata _metadataURI
+        string calldata _jsondata
     ) internal {
-        requests[_creator].push(Request(msg.sender, _nftReceiver, _erc20, _amount, false, _metadataURI));
-        emit NewRequest(_creator, requests[_creator].length - 1);
+        requests[_creator].push(Request(msg.sender, _nftReceiver, _erc20, _amount, false));
+        emit NewRequest(_creator, requests[_creator].length - 1, _jsondata);
     }
 
     function _existsCreator(address _creator) internal view returns (bool) {
-        return creators[_creator].nft != address(0);
+        return creators[_creator] != address(0);
     }
 
     function _deployCliptoFor(address _creator, string calldata _creatorName) internal returns (address) {
