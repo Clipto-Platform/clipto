@@ -5,8 +5,8 @@ import { getCreatorArgs } from "./entity";
 import { Config } from "./types";
 
 const TOTAL_CREATORS = 12;
-const BATCH_SIZE = 6;
-const EPOCHS = 2;
+const BATCH_SIZE = 12;
+const EPOCHS = 1;
 
 const config: Config = {
   rpcUrl: constants.rpcUrl,
@@ -28,11 +28,7 @@ const migrateCreators = async (
   const args = await getCreatorArgs(config, first, skip);
 
   console.log(`Migrating ${args.creatorAddresses.length} creators ...`);
-  const tx = await contract.migrateCreator(
-    args.creatorAddresses,
-    args.creatorNames,
-    args.metadatURI
-  );
+  const tx = await contract.migrateCreator(args.creatorAddresses, args.creatorNames);
   await tx.wait();
   console.log(`Migrations complete`);
 };
@@ -61,12 +57,12 @@ const verifyCreators = async () => {
   const promises = args.creatorAddresses.map(async (creator, index) => {
     const onChainCreator = await contract.getCreator(creator);
 
-    if (onChainCreator.nft === constants.NULL_ADDR) {
+    if (onChainCreator === constants.NULL_ADDR) {
       console.log(`Creator ${creator} was not migrated`);
       pending.push(creator);
     }
 
-    const name = await tokenContract.attach(onChainCreator.nft).name();
+    const name = await tokenContract.attach(onChainCreator).name();
     console.log(name, args.creatorNames[index]);
   });
 
