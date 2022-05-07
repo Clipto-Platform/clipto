@@ -10,8 +10,15 @@ describe("CliptoExchange", () => {
   let cliptoToken: CliptoToken;
   let cliptoExchange: CliptoExchange;
   let erc20: MyERC20;
-  const ipfsLink1 = "ipfs://QmNrgEMcUygbKzZeZgYFosdd27VE9KnWbyUD73bKZJ3bGi";
-  const ipfsLink2 = "ipfs://QmNrgEMcUygbKzZeZgYFosdd27VE9KnWbyUD73bKZJ3bGX";
+
+  const jsondata1 = JSON.stringify({
+    username: "atul",
+    data: "extra data",
+  });
+  const jsondata2 = JSON.stringify({
+    username: "sample",
+    data: "diff data",
+  });
   const NULL_ADDR = "0x0000000000000000000000000000000000000000";
 
   beforeEach(async () => {
@@ -60,14 +67,11 @@ describe("CliptoExchange", () => {
   it("should register a new creator", async () => {
     const tx = await cliptoExchange
       .connect(account)
-      .registerCreator("creator", ipfsLink1);
+      .registerCreator("creator", jsondata1);
     await tx.wait();
 
-    const creator = await cliptoExchange.getCreator(account.address);
-    expect(creator.metadataURI).to.eql(ipfsLink1);
-    expect(creator.nft.length).not.eql(0);
-
-    const token = await ethers.getContractAt("CliptoToken", creator.nft);
+    const nft = await cliptoExchange.getCreator(account.address);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect(await token.symbol()).to.eql("CTO");
     expect(await token.name()).to.eql("Clipto Creator - creator");
     expect(await token.owner()).to.eql(account.address);
@@ -77,12 +81,12 @@ describe("CliptoExchange", () => {
   it("should create a new request", async () => {
     let tx = await cliptoExchange
       .connect(account)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     tx = await cliptoExchange
       .connect(account)
-      .nativeNewRequest(account.address, account.address, ipfsLink1, {
+      .nativeNewRequest(account.address, account.address, jsondata1, {
         value: 1,
       });
     await tx.wait();
@@ -92,14 +96,13 @@ describe("CliptoExchange", () => {
     expect(request.erc20).to.eql(NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(1);
     expect(request.fulfilled).to.eql(false);
-    expect(request.metadataURI).to.eql(ipfsLink1);
 
     tx = await erc20.approve(cliptoExchange.address, 10);
     await tx.wait();
 
     tx = await cliptoExchange
       .connect(account)
-      .newRequest(account.address, account.address, erc20.address, 10, ipfsLink1);
+      .newRequest(account.address, account.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     request = await cliptoExchange.getRequest(account.address, 1);
@@ -107,7 +110,6 @@ describe("CliptoExchange", () => {
     expect(request.erc20).to.eql(erc20.address);
     expect(request.amount.toNumber()).to.eql(10);
     expect(request.fulfilled).to.eql(false);
-    expect(request.metadataURI).to.eql(ipfsLink1);
   });
 
   it("should create a new request for different requester", async () => {
@@ -117,12 +119,12 @@ describe("CliptoExchange", () => {
 
     let tx = await cliptoExchange
       .connect(creator)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     tx = await cliptoExchange
       .connect(requester)
-      .nativeNewRequest(creator.address, nftReceiver.address, ipfsLink1, {
+      .nativeNewRequest(creator.address, nftReceiver.address, jsondata1, {
         value: 1,
       });
     await tx.wait();
@@ -133,14 +135,13 @@ describe("CliptoExchange", () => {
     expect(request.erc20).to.eql(NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(1);
     expect(request.fulfilled).to.eql(false);
-    expect(request.metadataURI).to.eql(ipfsLink1);
 
     tx = await erc20.connect(requester).approve(cliptoExchange.address, 10);
     await tx.wait();
 
     tx = await cliptoExchange
       .connect(requester)
-      .newRequest(creator.address, nftReceiver.address, erc20.address, 10, ipfsLink1);
+      .newRequest(creator.address, nftReceiver.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     request = await cliptoExchange.getRequest(creator.address, 1);
@@ -149,32 +150,28 @@ describe("CliptoExchange", () => {
     expect(request.erc20).to.eql(erc20.address);
     expect(request.amount.toNumber()).to.eql(10);
     expect(request.fulfilled).to.eql(false);
-    expect(request.metadataURI).to.eql(ipfsLink1);
   });
 
   it("should update creator", async () => {
     let tx = await cliptoExchange
       .connect(account)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
-    let creator = await cliptoExchange.getCreator(account.address);
-    expect(creator.metadataURI).to.eql(ipfsLink1);
-    expect(creator.nft.length).not.eql(0);
+    let nft = await cliptoExchange.getCreator(account.address);
+    expect(nft.length).not.eql(0);
 
-    tx = await cliptoExchange.connect(account).updateCreator(ipfsLink2);
+    tx = await cliptoExchange.connect(account).updateCreator(jsondata2);
     await tx.wait();
 
-    creator = await cliptoExchange.getCreator(account.address);
-    expect(creator.metadataURI).not.eql(ipfsLink1);
-    expect(creator.metadataURI).to.eql(ipfsLink2);
-    expect(creator.nft.length).not.eql(0);
+    nft = await cliptoExchange.getCreator(account.address);
+    expect(nft.length).not.eql(0);
   });
 
   it("should deliver a request and mint an nft", async () => {
     let tx = await cliptoExchange
       .connect(account)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     const prevBalance = await erc20.balanceOf(cliptoExchange.address);
@@ -183,7 +180,7 @@ describe("CliptoExchange", () => {
     await tx.wait();
     tx = await cliptoExchange
       .connect(account)
-      .newRequest(account.address, account.address, erc20.address, 10, ipfsLink1);
+      .newRequest(account.address, account.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     let request = await cliptoExchange.getRequest(account.address, 0);
@@ -195,7 +192,7 @@ describe("CliptoExchange", () => {
 
     const creatorPrevBalance = await erc20.balanceOf(account.address);
 
-    tx = await cliptoExchange.connect(account).deliverRequest(0, ipfsLink2);
+    tx = await cliptoExchange.connect(account).deliverRequest(0, jsondata2);
     await tx.wait();
 
     const creatorNewBalance = await erc20.balanceOf(account.address);
@@ -204,17 +201,17 @@ describe("CliptoExchange", () => {
     expect(request.fulfilled).to.eql(true);
     expect(creatorNewBalance.toNumber() - creatorPrevBalance.toNumber()).to.eql(10);
 
-    const creator = await cliptoExchange.getCreator(account.address);
-    const token = await ethers.getContractAt("CliptoToken", creator.nft);
+    const nft = await cliptoExchange.getCreator(account.address);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect(await token.name()).to.eql("Clipto Creator - sample creator");
     expect((await token.balanceOf(account.address)).toNumber()).to.eql(1);
-    expect(await token.tokenURI(1)).to.eql(ipfsLink2);
+    expect(await token.tokenURI(1)).to.eql(jsondata2);
   });
 
   it("should refund a request", async () => {
     let tx = await cliptoExchange
       .connect(account)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     const prevBalance = await erc20.balanceOf(cliptoExchange.address);
@@ -223,7 +220,7 @@ describe("CliptoExchange", () => {
     await tx.wait();
     tx = await cliptoExchange
       .connect(dummy)
-      .newRequest(account.address, account.address, erc20.address, 10, ipfsLink1);
+      .newRequest(account.address, account.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     let request = await cliptoExchange.getRequest(account.address, 0);
@@ -261,7 +258,7 @@ describe("CliptoExchange", () => {
 
     let tx = await cliptoExchange
       .connect(dummy)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     tx = await cliptoExchange.connect(account).setFeeRate(10, 100);
@@ -273,11 +270,11 @@ describe("CliptoExchange", () => {
     await tx.wait();
     tx = await cliptoExchange
       .connect(account)
-      .newRequest(dummy.address, dummy.address, erc20.address, 10, ipfsLink1);
+      .newRequest(dummy.address, dummy.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     const feeDestPrevBalance = await erc20.balanceOf(account.address);
-    tx = await cliptoExchange.connect(dummy).deliverRequest(0, ipfsLink2);
+    tx = await cliptoExchange.connect(dummy).deliverRequest(0, jsondata2);
     await tx.wait();
 
     const creatorNewBalance = await erc20.balanceOf(dummy.address);
@@ -288,17 +285,13 @@ describe("CliptoExchange", () => {
   });
 
   it("should migrate creators", async () => {
-    const tx = await cliptoExchange.migrateCreator(
-      [account.address],
-      ["creator"],
-      [ipfsLink1]
-    );
+    const tx = await cliptoExchange.migrateCreator([account.address], ["creator"]);
     await tx.wait();
 
-    const creator = await cliptoExchange.getCreator(account.address);
-    expect(creator.nft.length).not.eql(0);
+    const nft = await cliptoExchange.getCreator(account.address);
+    expect(nft.length).not.eql(0);
 
-    const token = await ethers.getContractAt("CliptoToken", creator.nft);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect(await token.symbol()).to.eql("CTO");
     expect(await token.name()).to.eql("Clipto Creator - creator");
   });
@@ -310,14 +303,14 @@ describe("CliptoExchange", () => {
 
     let tx = await cliptoExchange
       .connect(creator)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     tx = await erc20.connect(requester).approve(cliptoExchange.address, 10);
     await tx.wait();
     tx = await cliptoExchange
       .connect(requester)
-      .newRequest(creator.address, nftReceiver.address, erc20.address, 10, ipfsLink1);
+      .newRequest(creator.address, nftReceiver.address, erc20.address, 10, jsondata1);
     await tx.wait();
 
     let request = await cliptoExchange.getRequest(creator.address, 0);
@@ -329,17 +322,17 @@ describe("CliptoExchange", () => {
       cliptoExchange,
       cliptoExchangeV2
     )) as CliptoExchange;
-    tx = await cliptoExchange.connect(creator).deliverRequest(0, ipfsLink2);
+    tx = await cliptoExchange.connect(creator).deliverRequest(0, jsondata2);
     await tx.wait();
 
     request = await cliptoExchange.getRequest(creator.address, 0);
     expect(request.fulfilled).to.eql(true);
 
-    const creatorData = await cliptoExchange.getCreator(creator.address);
-    const token = await ethers.getContractAt("CliptoToken", creatorData.nft);
+    const nft = await cliptoExchange.getCreator(creator.address);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect(await token.name()).to.eql("Clipto Creator - sample creator");
     expect((await token.balanceOf(nftReceiver.address)).toNumber()).to.eql(1);
-    expect(await token.tokenURI(1)).to.eql(ipfsLink2);
+    expect(await token.tokenURI(1)).to.eql(jsondata2);
   });
 
   it("should complete the request, and send nft to different receiver", async () => {
@@ -349,12 +342,12 @@ describe("CliptoExchange", () => {
 
     let tx = await cliptoExchange
       .connect(account)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
     tx = await cliptoExchange
       .connect(requester)
-      .nativeNewRequest(creator.address, nftReceiver.address, ipfsLink1, {
+      .nativeNewRequest(creator.address, nftReceiver.address, jsondata1, {
         value: 20,
       });
     await tx.wait();
@@ -365,17 +358,16 @@ describe("CliptoExchange", () => {
     expect(request.erc20).to.eql(NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(20);
     expect(request.fulfilled).to.eql(false);
-    expect(request.metadataURI).to.eql(ipfsLink1);
 
-    tx = await cliptoExchange.connect(creator).deliverRequest(0, ipfsLink2);
+    tx = await cliptoExchange.connect(creator).deliverRequest(0, jsondata2);
     await tx.wait();
 
     request = await cliptoExchange.getRequest(creator.address, 0);
     expect(request.fulfilled).to.eql(true);
-    const creatorData = await cliptoExchange.getCreator(creator.address);
-    const token = await ethers.getContractAt("CliptoToken", creatorData.nft);
+    const nft = await cliptoExchange.getCreator(creator.address);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect((await token.balanceOf(nftReceiver.address)).toNumber()).to.eql(1);
-    expect(await token.tokenURI(1)).to.eql(ipfsLink2);
+    expect(await token.tokenURI(1)).to.eql(jsondata2);
   });
 
   it("should update implementation of beacon", async () => {
@@ -383,13 +375,13 @@ describe("CliptoExchange", () => {
 
     const tx = await cliptoExchange
       .connect(creator)
-      .registerCreator("sample creator", ipfsLink1);
+      .registerCreator("sample creator", jsondata1);
     await tx.wait();
 
-    const creatorData = await cliptoExchange.getCreator(account.address);
-    expect(creatorData.nft.length).not.eql(0);
+    const nft = await cliptoExchange.getCreator(account.address);
+    expect(nft.length).not.eql(0);
 
-    const token = await ethers.getContractAt("CliptoToken", creatorData.nft);
+    const token = await ethers.getContractAt("CliptoToken", nft);
     expect(await token.contractURI()).to.eql(
       "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
     );
