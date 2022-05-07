@@ -14,12 +14,6 @@ function check_error() {
 
 STAGED_FILES=($(git diff --name-only --diff-filter=ACD))
 
-npm run compile
-check_error "error running compile"
-
-npm run test
-check_error "error running test"
-
 npm run lint:fix
 check_error "error running lint fix"
 
