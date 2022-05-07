@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 // eslint-disable-next-line node/no-missing-import
 import { CliptoToken } from "../typechain";
+import * as constant from "./constant";
 
 describe("CliptoToken", () => {
   let account: SignerWithAddress;
@@ -27,9 +28,7 @@ describe("CliptoToken", () => {
     expect(totalSupply.toNumber()).to.eql(0);
     expect(await cliptoToken.name()).to.eql("Clipto Creator - creator");
     expect(await cliptoToken.symbol()).to.eql("CTO");
-    expect(await cliptoToken.contractURI()).to.eql(
-      "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
-    );
+    expect(await cliptoToken.contractURI()).to.eql(constant.CONTRACT_URI);
     expect(await cliptoToken.owner()).to.eql(account.address);
   });
 

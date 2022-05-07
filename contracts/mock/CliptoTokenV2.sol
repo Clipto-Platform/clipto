@@ -40,7 +40,7 @@ contract CliptoTokenV2 is CliptoTokenStorage, Initializable, ERC721Upgradeable {
 
     // @mock change to contract uri
     function contractURI() external pure returns (string memory) {
-        return "ipfs://QmQUgb26NHQN1BTBY3JhjwJTaykHnqUxT2kCTTEcAxsMoN";
+        return "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6Lgq";
     }
 
     function tokenURI(uint256 _tokenId) public view override(ERC721Upgradeable) returns (string memory) {

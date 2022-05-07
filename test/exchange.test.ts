@@ -1,8 +1,9 @@
+/* eslint-disable node/no-missing-import */
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
-// eslint-disable-next-line node/no-missing-import
 import { CliptoExchange, CliptoToken, MyERC20 } from "../typechain";
+import * as constant from "./constant";
 
 describe("CliptoExchange", () => {
   let account: SignerWithAddress;
@@ -19,7 +20,6 @@ describe("CliptoExchange", () => {
     username: "sample",
     data: "diff data",
   });
-  const NULL_ADDR = "0x0000000000000000000000000000000000000000";
 
   beforeEach(async () => {
     const accounts = await ethers.getSigners();
@@ -93,7 +93,7 @@ describe("CliptoExchange", () => {
 
     let request = await cliptoExchange.getRequest(account.address, 0);
     expect(request.requester).to.eql(account.address);
-    expect(request.erc20).to.eql(NULL_ADDR);
+    expect(request.erc20).to.eql(constant.NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(1);
     expect(request.fulfilled).to.eql(false);
 
@@ -132,7 +132,7 @@ describe("CliptoExchange", () => {
     let request = await cliptoExchange.getRequest(creator.address, 0);
     expect(request.requester).to.eql(requester.address);
     expect(request.nftReceiver).to.eql(nftReceiver.address);
-    expect(request.erc20).to.eql(NULL_ADDR);
+    expect(request.erc20).to.eql(constant.NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(1);
     expect(request.fulfilled).to.eql(false);
 
@@ -355,7 +355,7 @@ describe("CliptoExchange", () => {
     let request = await cliptoExchange.getRequest(creator.address, 0);
     expect(request.requester).to.eql(requester.address);
     expect(request.nftReceiver).to.eql(nftReceiver.address);
-    expect(request.erc20).to.eql(NULL_ADDR);
+    expect(request.erc20).to.eql(constant.NULL_ADDR);
     expect(request.amount.toNumber()).to.eql(20);
     expect(request.fulfilled).to.eql(false);
 
@@ -382,17 +382,13 @@ describe("CliptoExchange", () => {
     expect(nft.length).not.eql(0);
 
     const token = await ethers.getContractAt("CliptoToken", nft);
-    expect(await token.contractURI()).to.eql(
-      "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
-    );
+    expect(await token.contractURI()).to.eql(constant.CONTRACT_URI);
 
     const cliptoTokenV2 = await ethers.getContractFactory("CliptoTokenV2");
     cliptoToken = (await upgrades.upgradeBeacon(
       cliptoToken,
       cliptoTokenV2
     )) as CliptoToken;
-    expect(await token.contractURI()).to.eql(
-      "ipfs://QmQUgb26NHQN1BTBY3JhjwJTaykHnqUxT2kCTTEcAxsMoN"
-    );
+    expect(await token.contractURI()).to.eql(constant.CONTRACT_URI_V2);
   });
 });
