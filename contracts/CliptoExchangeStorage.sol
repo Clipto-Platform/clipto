@@ -11,14 +11,8 @@ abstract contract CliptoExchangeStorage {
         address erc20;
         uint256 amount;
         bool fulfilled;
-        string metadataURI;
     }
 
-    struct Creator {
-        address nft;
-        string metadataURI;
-    }
-
-    mapping(address => Creator) public creators;
+    mapping(address => address) public creators;
     mapping(address => Request[]) public requests;
 }

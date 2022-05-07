@@ -23,5 +23,4 @@ export interface Creator {
 export interface MigrateCreatorArgs {
   creatorAddresses: string[];
   creatorNames: string[];
-  metadatURI: string[];
 }
