@@ -38,7 +38,7 @@ contract CliptoToken is CliptoTokenStorage, Initializable, ERC721Upgradeable {
     }
 
     function contractURI() external pure returns (string memory) {
-        return "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH";
+        return "ipfs://QmfAAJSnwWpTKNPyYSu1Lir9LZ1LVcBrC4WoMhxZC7K1ys";
     }
 
     function tokenURI(uint256 _tokenId) public view override(ERC721Upgradeable) returns (string memory) {

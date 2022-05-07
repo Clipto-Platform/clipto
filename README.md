@@ -2,6 +2,10 @@
 
 Clipto is a decentralized service that lets users hire creators to make personalized videos.
 
+## Documentations
+- Check `/docs` for contract explanations
+- Check `/docs/contract-uri` for nft contract uri
+
 ## Set up
 
 1. Install dependencies

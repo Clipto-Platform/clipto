@@ -28,7 +28,7 @@ describe("CliptoToken", () => {
     expect(await cliptoToken.name()).to.eql("Clipto Creator - creator");
     expect(await cliptoToken.symbol()).to.eql("CTO");
     expect(await cliptoToken.contractURI()).to.eql(
-      "ipfs://QmdLjLZsrbHHeAYoJvJdUKCo77Qj4r1qxRPPX1vBA6LgqH"
+      "ipfs://QmfAAJSnwWpTKNPyYSu1Lir9LZ1LVcBrC4WoMhxZC7K1ys"
     );
     expect(await cliptoToken.owner()).to.eql(account.address);
   });
