@@ -25,6 +25,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     event NewRequest(address indexed creator, uint256 requestId, string jsondata);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
+    event RejectRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
 
     function initialize(address _owner, address _beacon) public initializer {
@@ -73,7 +74,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
     function updateCreator(string calldata _jsondata) external whenNotPaused {
         require(_existsCreator(msg.sender), "error: creator is not yet registered");
-        _updateCreator(msg.sender, _jsondata);
+        emit CreatorUpdated(msg.sender, _jsondata);
     }
 
     function newRequest(
@@ -127,6 +128,14 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         emit RefundedRequest(_creator, _requestId);
     }
 
+    function rejectRequest(uint256 _requestId) external whenNotPaused {
+        Request storage request = requests[msg.sender][_requestId];
+        require(!request.fulfilled, "error: request already fulfilled/refunded");
+
+        request.fulfilled = true;
+        emit RejectRequest(msg.sender, _requestId);
+    }
+
     function migrateCreator(address[] calldata _creatorAddress, string[] calldata _creatorNames) external onlyOwner {
         require(_creatorAddress.length > 0, "error: empty creator address");
 
@@ -165,10 +174,6 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         creators[_creator] = nft;
 
         emit CreatorRegistered(_creator, nft, _jsondata);
-    }
-
-    function _updateCreator(address _creator, string calldata _jsondata) internal {
-        emit CreatorUpdated(_creator, _jsondata);
     }
 
     function _validateRequest(address _creator, uint256 _amount) internal view {
