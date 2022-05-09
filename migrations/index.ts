@@ -4,9 +4,9 @@ import * as constants from "./constants";
 import { getCreatorArgs } from "./entity";
 import { Config } from "./types";
 
-const TOTAL_CREATORS = 12;
-const BATCH_SIZE = 12;
-const EPOCHS = 1;
+const TOTAL_CREATORS = 105;
+const BATCH_SIZE = 10;
+const EPOCHS = 11;
 
 const config: Config = {
   rpcUrl: constants.rpcUrl,
@@ -63,7 +63,11 @@ const verifyCreators = async () => {
     }
 
     const name = await tokenContract.attach(onChainCreator).name();
+    const owner = await tokenContract.attach(onChainCreator).owner();
+
     console.log(name, args.creatorNames[index]);
+    console.log(owner, args.creatorAddresses[index]);
+    console.log("\n");
   });
 
   await Promise.all(promises);

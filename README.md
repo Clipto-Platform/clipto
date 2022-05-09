@@ -3,6 +3,7 @@
 Clipto is a decentralized service that lets users hire creators to make personalized videos.
 
 ## Documentations
+
 - Check `/docs` for contract explanations
 - Check `/docs/contract-uri` for nft contract uri
 
@@ -81,4 +82,10 @@ CliptoToken    : 0xa318A87Fd79d7cD91288b4C08896BebCd788Fac4
 Mumbai
 CliptoExchange Proxy : 0x10970e6FD7545d24021c2dE1ee7963E6F3235df2
 CliptoToken Beacon   : 0xFa0a1EaB48C7dB26F8021bD3291C534Ba8453123
+```
+
+```
+Polygon
+CliptoExchange Proxy : 0xB491F739463B5bD43bCb243703F2B6742d9F779b
+CliptoToken Beacon   : 0x87Dc497620110693E3A19EB0E79Df339B3fe997d
 ```

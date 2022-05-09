@@ -28,12 +28,13 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     event RejectRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
 
-    function initialize(address _owner, address _beacon) public initializer {
+    function initialize(address _feeRecipient, address _beacon) public initializer {
         __ReentrancyGuard_init();
         __Pausable_init();
 
         beacon = _beacon;
-        owner = _owner;
+        owner = msg.sender;
+        feeRecipient = _feeRecipient;
         _feeDenom = 1;
     }
 
@@ -55,6 +56,10 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
 
         _feeNumer = feeNumer_;
         _feeDenom = feeDenom_;
+    }
+
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {
+        feeRecipient = _feeRecipient;
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
@@ -104,7 +109,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         require(!request.fulfilled, "error: request already fulfilled/refunded");
 
         uint256 feeAmount = (request.amount * _feeNumer) / _feeDenom;
-        _transferPayment(owner, request.erc20, feeAmount);
+        _transferPayment(feeRecipient, request.erc20, feeAmount);
 
         uint256 paymentAmount = request.amount - feeAmount;
         _transferPayment(msg.sender, request.erc20, paymentAmount);
