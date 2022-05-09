@@ -370,6 +370,34 @@ describe("CliptoExchange", () => {
     expect(await token.tokenURI(1)).to.eql(jsondata2);
   });
 
+  it("should reject a request", async () => {
+    const creator = account;
+    const requester = account;
+    const nftReceiver = dummy;
+
+    let tx = await cliptoExchange
+      .connect(creator)
+      .registerCreator("sample creator", jsondata1);
+    await tx.wait();
+
+    tx = await erc20.connect(requester).approve(cliptoExchange.address, 10);
+    await tx.wait();
+    tx = await cliptoExchange
+      .connect(requester)
+      .newRequest(creator.address, nftReceiver.address, erc20.address, 10, jsondata1);
+    await tx.wait();
+
+    let request = await cliptoExchange.getRequest(creator.address, 0);
+    expect(request.erc20).to.eql(erc20.address);
+    expect(request.amount.toNumber()).to.eql(10);
+
+    tx = await cliptoExchange.rejectRequest(0);
+    await tx.wait();
+
+    request = await cliptoExchange.getRequest(creator.address, 0);
+    expect(request.fulfilled).to.eql(true);
+  });
+
   it("should update implementation of beacon", async () => {
     const creator = account;
 
