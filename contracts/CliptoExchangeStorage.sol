@@ -4,6 +4,7 @@ pragma solidity ^0.8.10;
 abstract contract CliptoExchangeStorage {
     address public beacon;
     address public owner;
+    address public feeRecipient;
 
     struct Request {
         address requester;
