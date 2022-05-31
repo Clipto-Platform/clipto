@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 import "../CliptoTokenStorage.sol";
 
-contract CliptoTokenV2 is CliptoTokenStorage, Initializable, ERC721Upgradeable {
+contract CliptoTokenMock is CliptoTokenStorage, Initializable, ERC721Upgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _currentTokenId;

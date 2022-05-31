@@ -6,15 +6,13 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../beacon/CloneableBeaconProxy.sol";
-import "../interfaces/ICliptoToken.sol";
-import "../CliptoExchangeStorage.sol";
+import "../../contracts/beacon/CloneableBeaconProxy.sol";
+import "../../contracts/interfaces/ICliptoToken.sol";
+import "../../contracts/CliptoExchangeStorage.sol";
 
-contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 private _feeNumer;
     uint256 private _feeDenom;
-
-    uint256 public iamExtraVar;
 
     modifier onlyOwner() {
         require(owner == msg.sender, "not the owner");
@@ -27,14 +25,16 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
     event NewRequest(address indexed creator, uint256 requestId, string jsondata);
     event DeliveredRequest(address indexed creator, uint256 requestId, uint256 nftTokenId);
     event RefundedRequest(address indexed creator, uint256 requestId);
+    event RejectRequest(address indexed creator, uint256 requestId);
     event MigrationCreator(address[] creators);
 
-    function initialize(address _owner, address _beacon) public initializer {
+    function initialize(address _feeRecipient, address _beacon) public initializer {
         __ReentrancyGuard_init();
         __Pausable_init();
 
         beacon = _beacon;
-        owner = _owner;
+        owner = msg.sender;
+        feeRecipient = _feeRecipient;
         _feeDenom = 1;
     }
 
@@ -58,6 +58,10 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         _feeDenom = feeDenom_;
     }
 
+    function setFeeRecipient(address _feeRecipient) external onlyOwner {
+        feeRecipient = _feeRecipient;
+    }
+
     function transferOwnership(address newOwner) external onlyOwner {
         address oldOwner = owner;
         owner = newOwner;
@@ -75,7 +79,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
 
     function updateCreator(string calldata _jsondata) external whenNotPaused {
         require(_existsCreator(msg.sender), "error: creator is not yet registered");
-        _updateCreator(msg.sender, _jsondata);
+        emit CreatorUpdated(msg.sender, _jsondata);
     }
 
     function newRequest(
@@ -105,7 +109,7 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         require(!request.fulfilled, "error: request already fulfilled/refunded");
 
         uint256 feeAmount = (request.amount * _feeNumer) / _feeDenom;
-        _transferPayment(owner, request.erc20, feeAmount);
+        _transferPayment(feeRecipient, request.erc20, feeAmount);
 
         uint256 paymentAmount = request.amount - feeAmount;
         _transferPayment(msg.sender, request.erc20, paymentAmount);
@@ -127,6 +131,14 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         request.fulfilled = true;
 
         emit RefundedRequest(_creator, _requestId);
+    }
+
+    function rejectRequest(uint256 _requestId) external whenNotPaused {
+        Request storage request = requests[msg.sender][_requestId];
+        require(!request.fulfilled, "error: request already fulfilled/refunded");
+
+        request.fulfilled = true;
+        emit RejectRequest(msg.sender, _requestId);
     }
 
     function migrateCreator(address[] calldata _creatorAddress, string[] calldata _creatorNames) external onlyOwner {
@@ -167,10 +179,6 @@ contract CliptoExchangeV2 is CliptoExchangeStorage, Initializable, PausableUpgra
         creators[_creator] = nft;
 
         emit CreatorRegistered(_creator, nft, _jsondata);
-    }
-
-    function _updateCreator(address _creator, string calldata _jsondata) internal {
-        emit CreatorUpdated(_creator, _jsondata);
     }
 
     function _validateRequest(address _creator, uint256 _amount) internal view {

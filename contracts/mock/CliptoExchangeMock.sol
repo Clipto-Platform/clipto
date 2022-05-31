@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0 License
+ // SPDX-License-Identifier: AGPL-3.0 License
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -6,15 +6,17 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./beacon/CloneableBeaconProxy.sol";
-import "./interfaces/ICliptoToken.sol";
-import "./CliptoExchangeStorage.sol";
+import "../../contracts/beacon/CloneableBeaconProxy.sol";
+import "../../contracts/interfaces/ICliptoToken.sol";
+import "../../contracts/CliptoExchangeStorage.sol";
 
-contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgradeable, ReentrancyGuardUpgradeable {
+contract CliptoExchangeMock is CliptoExchangeStorage, Initializable, PausableUpgradeable, ReentrancyGuardUpgradeable {
     uint256 private _feeNumer;
     uint256 private _feeDenom;
 
     mapping(bytes32 => Request) public bountyRequests;
+
+    uint256 public iamExtraVar;
 
     modifier onlyOwner() {
         require(owner == msg.sender, "not the owner");
