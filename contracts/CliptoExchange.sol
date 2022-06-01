@@ -30,7 +30,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
     event MigrationCreator(address[] creators);
     event NewBountyRequest(bytes32 bountyHash, string jsondata);
     event RefundedBountyRequest(bytes32 bountyHash);
-    event DeliveredBountyRequest(address indexed creator, uint256 nftTokenId);
+    event DeliveredBountyRequest(address indexed creator,bytes32 bountyHash, uint256 nftTokenId);
 
     function initialize(address _feeRecipient, address _beacon) public initializer {
         __ReentrancyGuard_init();
@@ -167,6 +167,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         string calldata _tokenURI
         ) external nonReentrant whenNotPaused {
 
+       require(_existsCreator(msg.sender), "Creator not registered");
         bytes32 bountyHash =  keccak256(abi.encode(hashWord));
         Request storage request = bountyRequests[bountyHash];
         require(request.nftReceiver != address(0), "invalid bounty hash");
@@ -183,7 +184,7 @@ contract CliptoExchange is CliptoExchangeStorage, Initializable, PausableUpgrade
         ICliptoToken(nft).safeMint(request.nftReceiver, _tokenURI);
 
         request.fulfilled = true;
-        emit DeliveredBountyRequest(msg.sender, nftTokenId + 1);
+        emit DeliveredBountyRequest(msg.sender, bountyHash, nftTokenId + 1);
     }
 
     function refundBountyRequest(string calldata hashWord) external nonReentrant whenNotPaused {
